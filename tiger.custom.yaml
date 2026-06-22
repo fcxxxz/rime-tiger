@@ -74,6 +74,7 @@ patch:
     - fallback_segmentor
   engine/translators:
     - punct_translator
+    - lua_translator@symbol_hint_translator #反斜杠符号提示
     - reverse_lookup_translator
     - table_translator
     - history_translator@historyDM

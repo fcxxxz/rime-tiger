@@ -5,10 +5,10 @@ schema:
     - PY_c  # 拼音方案
     - easy_english # 英文
   description: |
-    虎码官方单字
+    虎码官方词库
     敲 ` 鍵進入拼音反查
-  name: "虎码官方单字"
-  schema_id: tiger
+  name: "虎码官方词库·全字集"
+  schema_id: tigress_full
   version: 0.9
 
 
@@ -35,7 +35,7 @@ switches: # 0 默认关，1 默认开
     reset: 0
     states: [ 有刻, 半刻, 无刻 ]
   - name: charset_comment_filter  #字符集提示
-    reset: 0  
+    reset: 0
     states: [ U区关, U区开 ]
   - name: udpf_switch
     reset: 0
@@ -59,6 +59,7 @@ engine:
     - recognizer
     - lua_processor@*space_proc3 #标顶空码不上屏
     - lua_processor@*symbol_proc #候选唯一时符号顶字
+    - lua_processor@*tigress_user_words*processor #用户加词、减词、调序
     - key_binder
     - speller
     - punctuator
@@ -89,15 +90,17 @@ engine:
 
 
   filters:
+    - lua_filter@*tigress_user_words*filter #用户加词、减词、调序
     # - charset_filter@utf8
     # - charset_filter@gbk
     # - charset_filter@gb2312
+    # - charset_filter@big5
     - simplifier@simplification  #简繁滤镜
+    # - simplifier@fanjian  #繁简滤镜
     # - reverse_lookup_filter@reverse_lookup #反查词典滤镜
-    # - simplifier@fanjian #繁简滤镜
-    - simplifier@pinyin #拼音滤镜
+    - simplifier@pinyin  #拼音滤镜
     - simplifier@chaifen #拆分滤镜
-    - simplifier@emoji_cn #表情滤镜
+    - simplifier@emoji_cn  #表情滤镜
     - lua_filter@charset_comment_filter #Unicode分区提示滤镜
     - lua_filter@lua_unicode_display_filter #Unicode编码显示
     - uniquifier #过滤重复
@@ -112,7 +115,7 @@ speller:
   # 若要添加四码上屏功能，在  ^;\w+ 后面 加上  |^\w{4}$  即可
 
 translator:
-  dictionary: tiger.extended
+  dictionary: tigress_full.extended
   enable_charset_filter: false
   enable_encoder: false
   enable_sentence: false
@@ -125,7 +128,6 @@ translator:
     # - "xform/^/ /" #提示前面 +间距
 
 
-# 拼音反查
 reverse_lookup:
   dictionary: PY_c
   prefix: "`"
@@ -143,9 +145,9 @@ reverse_lookup:
 key_binder:
   #  import_preset: default
   bindings:
-    #- { when: composing, accept: Return, send: Escape } # 回车清屏编码
-    - { accept: space, send: space, when: has_menu } # 有候选时空格上屏首选
-    - { accept: space, send: Escape, when: composing } # 无候选(空码）时空格清屏编码
+    #- { when: composing, accept: Return, send: Escape }
+    #- { accept: space, send: space, when: has_menu } #有候选时空格上屏首选
+    #- { accept: space, send: Escape, when: composing } #无候选时(空码)空格清屏
     - { accept: semicolon, send: 2, when: has_menu } # 分号次选
     - { when: has_menu, accept: apostrophe, send: 3 } # 引号三选
     - { when: composing, accept: Tab, send: Escape } # tab清屏
@@ -187,7 +189,7 @@ recognizer:
   # alternative_select_labels: [ ㊀, ㊁, ㊂, ㊃, ㊄, ㊅, ㊆, ㊇, ㊈ ]  #自定义候选序号显示符
 
 historySJ:
-  input: 'z'
+  input: z
   size: 1
   initial_quality: 0
 
@@ -263,15 +265,15 @@ easy_english:
 chaifen:
   opencc_config: hu_cf.json
   option_name: chaifen
-  show_in_comment: true 
-  comment_format:     
+  show_in_comment: true
+  comment_format:
     - "xform/&nbsp;/ /"
-  tags:     
+  tags:
     - abc
     - tiger
     - tigress
     - reverse_lookup
-  tips: all #如只想给单字加滤镜，可改为 char
+  tips: all  #只给单字加滤镜，改为 char 。 词也显示，改为 all
 
 
 punctuator:

@@ -7,7 +7,9 @@
 patch:
   schema_list:
     - {schema: tiger}
+    - {schema: tiger_full}
     - {schema: tigress}
+    - {schema: tigress_full}
     - {schema: PY_c}
   "switcher/hotkeys":  # 将默认的 F4热键 更改为ctrl+`
     - "Control+grave"

@@ -1,6 +1,6 @@
 --- by 晴
 --[[
-候选唯一时功能符号标顶
+候选唯一时标点符号顶字
 
 放在 key_binder 前面：
 
@@ -13,6 +13,7 @@ engine:
     - key_binder
 
 有第二候选时不处理，继续交给 key_binder 的符号选重。
+单引号是三选键，只有出现第三候选时才不处理。
 唯一候选上屏后放行当前符号，让后续 speller、punctuator 等继续触发快符、反查或标点。
 ]]
 
@@ -46,6 +47,14 @@ local function second_candidate(seg)
   return seg.menu:get_candidate_at(1)
 end
 
+local function third_candidate(seg)
+  if not seg or not seg.menu then
+    return nil
+  end
+  seg.menu:prepare(3)
+  return seg.menu:get_candidate_at(2)
+end
+
 function symbol_proc.func(key_event, env)
   if key_event:release() or key_event:alt() or key_event:ctrl()
       or key_event:caps() then
@@ -67,9 +76,14 @@ function symbol_proc.func(key_event, env)
     return kNoop
   end
 
-  local second = second_candidate(seg)
-  if second then
-    return kNoop
+  if key_event:repr() == "apostrophe" or key_event.keycode == string.byte("'") then
+    if third_candidate(seg) then
+      return kNoop
+    end
+  else
+    if second_candidate(seg) then
+      return kNoop
+    end
   end
 
   context:confirm_current_selection()

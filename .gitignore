@@ -1,6 +1,11 @@
 __pycache__/
 *.py[cod]
 
+# Development-only files
+tests/
+docs/
+tools/
+
 # Rime generated/local files
 build/
 *.userdb/

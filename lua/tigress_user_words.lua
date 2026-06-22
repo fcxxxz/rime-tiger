@@ -6,8 +6,8 @@
 --   Ctrl+'           block current candidate, or enter block capture
 --   Return           confirm word capture
 --   Ctrl+arrows      move current candidate in the visible candidate page
---   Ctrl+Home        move current candidate to the first visible position
---   Ctrl+End         move current candidate to the last visible position
+--   Ctrl+Option+arrows is the macOS-friendly alternative
+--   Ctrl+Home/End or Ctrl+Option+Home/End move current candidate to page edge
 
 local kRejected = 0
 local kAccepted = 1
@@ -18,9 +18,18 @@ local GENERATED_START = "# " .. USER_WORDS_MARKER .. " generated-start"
 local GENERATED_END = "# " .. USER_WORDS_MARKER .. " generated-end"
 
 local config = {
-    extended_dict = "tigress.extended.dict.yaml",
-    source_dicts = {
+    extended_dict = "tigress.user.dict.yaml",
+    legacy_migration_sources = {
         "tigress.extended.dict.yaml",
+        "tigress_full.extended.dict.yaml",
+    },
+    source_dicts = {
+        "tigress.user.dict.yaml",
+        "tigress.extended.dict.yaml",
+        "tigress_full.extended.dict.yaml",
+        "tigress.common.dict.yaml",
+        "tigress_ci.common.dict.yaml",
+        "tigress_simp_ci.common.dict.yaml",
         "tigress.dict.yaml",
         "tigress_ci.dict.yaml",
         "tigress_simp_ci.dict.yaml",
@@ -128,12 +137,18 @@ local function set_blocked(state, code, text)
     state.weights[code][text] = nil
 end
 
+local function is_user_layer_dict(filename)
+    return filename == config.extended_dict
+        or filename == "tigress.extended.dict.yaml"
+        or filename == "tigress_full.extended.dict.yaml"
+end
+
 local function parse_entry(filename, line)
     if line:match("^%s*$") or line:match("^%s*#") then
         return nil
     end
     local fields = split_tab(line)
-    if filename == config.extended_dict then
+    if is_user_layer_dict(filename) then
         local text, code, weight = fields[1], fields[2], tonumber(fields[3])
         if text and code and text ~= "" and code ~= "" then
             return { text = text, code = code, weight = weight }
@@ -163,7 +178,134 @@ local function parse_marker(line)
     return nil
 end
 
+local function contains_body_marker(lines)
+    for _, line in ipairs(lines) do
+        if line == "..." then
+            return true
+        end
+    end
+    return false
+end
+
+local function default_user_dict_lines()
+    return {
+        "# Rime dictionary: tigress.user",
+        "# encoding: utf-8",
+        "",
+        "---",
+        "name: tigress.user",
+        'version: "2026.06.22"',
+        "sort: by_weight",
+        "use_preset_vocabulary: false",
+        "columns:",
+        "  - text",
+        "  - code",
+        "  - weight",
+        "  - stem",
+        "encoder:",
+        "  rules:",
+        "    - length_equal: 2",
+        '      formula: "AaAbBaBb"',
+        "    - length_equal: 3",
+        '      formula: "AaBaCaCb"',
+        "    - length_in_range: [4, 99]",
+        '      formula: "AaBaCaZa"',
+        "...",
+        "",
+        "# Migrated from legacy tigress extended dictionaries when present.",
+    }
+end
+
+local function has_legacy_migration_marker(lines)
+    for _, line in ipairs(lines) do
+        if line:find(USER_WORDS_MARKER .. "\tlegacy-migrated", 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
+local function collect_legacy_user_entries(existing_lines)
+    local existing = {}
+    for _, line in ipairs(existing_lines) do
+        existing[line] = true
+    end
+
+    local rows = {}
+    for _, filename in ipairs(config.legacy_migration_sources) do
+        local in_body = false
+        for _, line in ipairs(read_lines(filename)) do
+            if not in_body then
+                if line == "..." then
+                    in_body = true
+                end
+            else
+                local marker = parse_marker(line)
+                if marker then
+                    if not existing[line] then
+                        table.insert(rows, line)
+                        existing[line] = true
+                    end
+                else
+                    local entry = parse_entry(filename, line)
+                    if entry then
+                        local added_raw = false
+                        if not existing[line] then
+                            table.insert(rows, line)
+                            existing[line] = true
+                            added_raw = true
+                        end
+                        if added_raw and entry.code and entry.code ~= "" then
+                            local marker_line = "# " .. USER_WORDS_MARKER .. "\tenabled\t" .. entry.code .. "\t" .. entry.text .. "\t" .. tostring(entry.weight or config.weight_base)
+                            if not existing[marker_line] then
+                                table.insert(rows, marker_line)
+                                existing[marker_line] = true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return rows
+end
+
+local function append_legacy_user_entries(lines, entries)
+    if #entries == 0 then
+        return false
+    end
+    table.insert(lines, "")
+    table.insert(lines, "# " .. USER_WORDS_MARKER .. "\tlegacy-migrated\t" .. now_stamp())
+    for _, line in ipairs(entries) do
+        table.insert(lines, line)
+    end
+    return true
+end
+
+local function ensure_user_dict()
+    local lines = read_lines(config.extended_dict)
+    local changed = false
+
+    if #lines == 0 or not contains_body_marker(lines) then
+        lines = default_user_dict_lines()
+        changed = true
+    end
+
+    if not has_legacy_migration_marker(lines) then
+        local entries = collect_legacy_user_entries(lines)
+        if append_legacy_user_entries(lines, entries) then
+            changed = true
+        end
+    end
+
+    if changed then
+        write_lines(config.extended_dict, lines)
+    end
+end
+
 local function load_state()
+    ensure_user_dict()
+
     local state = {
         added = {},
         blocked = {},
@@ -172,8 +314,16 @@ local function load_state()
     }
 
     for _, filename in ipairs(config.source_dicts) do
-        if filename ~= config.extended_dict then
-            for _, line in ipairs(read_lines(filename)) do
+        local in_generated = false
+        for _, line in ipairs(read_lines(filename)) do
+            if line == GENERATED_START then
+                in_generated = true
+                if filename == config.extended_dict then
+                    state.generated_loaded = true
+                end
+            elseif line == GENERATED_END then
+                in_generated = false
+            else
                 local marker = parse_marker(line)
                 if marker then
                     if marker.op == "disabled" then
@@ -181,30 +331,11 @@ local function load_state()
                     elseif marker.op == "enabled" then
                         set_added(state, marker.code, marker.text, tonumber(marker.value) or config.weight_base)
                     end
-                end
-            end
-        end
-    end
-
-    local in_generated = false
-    for _, line in ipairs(read_lines(config.extended_dict)) do
-        if line == GENERATED_START then
-            in_generated = true
-            state.generated_loaded = true
-        elseif line == GENERATED_END then
-            in_generated = false
-        else
-            local marker = parse_marker(line)
-            if marker then
-                if marker.op == "disabled" then
-                    set_blocked(state, marker.code, marker.text)
-                elseif marker.op == "enabled" then
-                    set_added(state, marker.code, marker.text, tonumber(marker.value) or config.weight_base)
-                end
-            elseif in_generated then
-                local entry = parse_entry(config.extended_dict, line)
-                if entry then
-                    set_added(state, entry.code, entry.text, entry.weight)
+                elseif in_generated then
+                    local entry = parse_entry(filename, line)
+                    if entry then
+                        set_added(state, entry.code, entry.text, entry.weight)
+                    end
                 end
             end
         end
@@ -285,7 +416,7 @@ local function disable_in_file(filename, code, text)
 
     for _, line in ipairs(lines) do
         local entry = parse_entry(filename, line)
-        if entry and entry.text == text and (entry.code == code or (filename == config.extended_dict and entry.code == nil)) then
+        if entry and entry.text == text and (entry.code == code or (is_user_layer_dict(filename) and entry.code == nil)) then
             table.insert(out, "# " .. USER_WORDS_MARKER .. "\tdisabled\t" .. code .. "\t" .. text .. "\t" .. now_stamp())
             table.insert(out, "# " .. line)
             changed = true
@@ -659,6 +790,25 @@ local function is_ctrl_shortcut(key_event)
     return key_event:ctrl() and not key_event:alt() and not key_event:shift() and not key_event:release()
 end
 
+local function is_reorder_shortcut(key_event)
+    local ctrl_only = key_event:ctrl() and not key_event:alt() and not key_event:shift() and not key_event:release()
+    local ctrl_option = key_event:ctrl() and key_event:alt() and not key_event:shift() and not key_event:release()
+    return ctrl_only or ctrl_option
+end
+
+local function handle_reorder_shortcut(keycode, env)
+    if keycode == KEY.UP or keycode == KEY.LEFT then
+        return move_selected(env, "prev") and kAccepted or kNoop
+    elseif keycode == KEY.DOWN or keycode == KEY.RIGHT then
+        return move_selected(env, "next") and kAccepted or kNoop
+    elseif keycode == KEY.HOME then
+        return move_selected(env, "front") and kAccepted or kNoop
+    elseif keycode == KEY.END then
+        return move_selected(env, "back") and kAccepted or kNoop
+    end
+    return kNoop
+end
+
 local processor = {}
 
 function processor.init(env)
@@ -710,22 +860,16 @@ function processor.func(key_event, env)
         return kNoop
     end
 
-    if not is_ctrl_shortcut(key_event) then
-        return kNoop
+    if is_ctrl_shortcut(key_event) then
+        if keycode == KEY.SEMICOLON then
+            return enter_capture(env, "add") and kAccepted or kNoop
+        elseif keycode == KEY.APOSTROPHE then
+            return enter_capture(env, "disable", current_selected_text(env)) and kAccepted or disable_selected(env) and kAccepted or kNoop
+        end
     end
 
-    if keycode == KEY.SEMICOLON then
-        return enter_capture(env, "add") and kAccepted or kNoop
-    elseif keycode == KEY.APOSTROPHE then
-        return enter_capture(env, "disable", current_selected_text(env)) and kAccepted or disable_selected(env) and kAccepted or kNoop
-    elseif keycode == KEY.UP or keycode == KEY.LEFT then
-        return move_selected(env, "prev") and kAccepted or kNoop
-    elseif keycode == KEY.DOWN or keycode == KEY.RIGHT then
-        return move_selected(env, "next") and kAccepted or kNoop
-    elseif keycode == KEY.HOME then
-        return move_selected(env, "front") and kAccepted or kNoop
-    elseif keycode == KEY.END then
-        return move_selected(env, "back") and kAccepted or kNoop
+    if is_reorder_shortcut(key_event) then
+        return handle_reorder_shortcut(keycode, env)
     end
 
     return kNoop

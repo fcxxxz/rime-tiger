@@ -2,167 +2,77 @@
 
 这是虎码的 Rime 配置文件，来源于秃包版本，并在此基础上做了个人化调整。
 
-## 主要改动
+## 方案列表
 
-- 去掉 `'` 的复选相关行为。
-- 关闭候选框超长时的自动翻转。
-- 在虎词 `tigress` 方案中集成用户加词、减词和候选词序调整功能。
-- 在虎码单字 `tiger` 和虎词 `tigress` 方案中加入空码标顶清屏和候选唯一时符号顶字。
+本配置把字版和词版都拆成常用版、全字集版两套独立方案：
 
-## 空码标顶清屏与符号顶字
+- `tiger`：虎码官方单字
+- `tiger_full`：虎码官方单字·全字集
+- `tigress`：虎码官方词库
+- `tigress_full`：虎码官方词库·全字集
+- `PY_c`：拼音方案
 
-该功能当前接入 `tiger` 和 `tigress`。
+常用版和全字集版是完整 schema 切换，不是运行时过滤器切换。旧版常用字模式使用 `lua_filter@core2022` 逐候选过滤；现在改为词典层面拆分，常用版不再生成非常用候选。
 
-### 功能说明
+`lua/core2022_filter.lua` 已删除。`core2022.dict.yaml` 仅作为常用字表数据保留。
 
-- 空码时按符号，清掉错误编码并吞掉这次符号，避免错码和标点一起上屏。
-- 候选唯一时按符号，先上屏唯一候选，再让这个符号继续生效。
-- 有第二候选时不顶字，继续交给原来的符号选重逻辑，例如 `;` 仍然选二候选。
+## 用户词共享
 
-### 需要复制
+用户自定义内容迁移到共享用户层：
 
-- `lua/space_proc3.lua`
-- `lua/symbol_proc.lua`
+- `tiger.user.dict.yaml`
+- `tigress.user.dict.yaml`
 
-### 需要修改 schema
+常用版和全字集版都会导入对应用户层。已经通过旧版 `tigress_user_words.lua` 添加或屏蔽的词，会从旧词库迁移并继续生效。
 
-在目标方案的 `engine/processors` 中，把两个 Lua processor 放在 `recognizer` 后、`key_binder` 前：
+## 顿号与符号菜单
 
-```yaml
-engine:
-  processors:
-    - ascii_composer
-    - recognizer
-    - lua_processor@*space_proc3 #标顶空码不上屏
-    - lua_processor@*symbol_proc #候选唯一时符号顶字
-    # tigress 还需要保留用户词 processor，放在这里即可：
-    # - lua_processor@*tigress_user_words*processor #用户加词、减词、调序
-    - key_binder
-```
+`/` 键现在只输出顿号 `、`。
 
-顺序很重要。必须在 `key_binder` 前面，否则 `;`、`'` 这类带选重功能的符号可能会先被处理，导致清屏或顶字不完整。
+旧版 `/bd`、`/pi`、`/bq` 等符号命令迁移到反斜杠：
+
+- `\bd`：标点符号
+- `\bq`：表情
+- `\pi`：π
+- `\sz`：色子
+
+输入 `\`、`\b`、`\p` 等前缀时，候选框会提示可用符号命令。
+
+## 空码与符号顶字
+
+`tiger`、`tiger_full`、`tigress`、`tigress_full` 都接入了空码标顶清屏和候选唯一时符号顶字：
+
+- 空码时按符号，会清掉错误编码并吞掉这次符号。
+- 候选唯一时按符号，会先上屏唯一候选，再让该符号继续生效。
+- 有第二候选时不顶字，继续交给原有选重逻辑，例如 `;` 仍然选二候选，`'` 仍然选三候选。
 
 ## 虎词加词、减词、调序
 
-该功能只接入 `tigress`，没有接入 `tiger`。
+该功能接入 `tigress` 和 `tigress_full`。
 
-### 快捷键
+快捷键：
 
 - `Ctrl+;`：进入加词模式。
 - `Ctrl+'`：进入减词模式，并默认带入当前高亮候选词。
 - `Enter`：在加词/减词模式中确认。
 - `Esc`：退出加词/减词模式。
 - `Backspace`：删除正在输入的取字编码；没有取字编码时，删除已经取到的最后一个字。
-- `Ctrl+上` 或 `Ctrl+左`：当前高亮候选前移一位。
-- `Ctrl+下` 或 `Ctrl+右`：当前高亮候选后移一位。
-- `Ctrl+Home`：当前高亮候选移到当前页第一位。
-- `Ctrl+End`：当前高亮候选移到当前页最后一位。
+- macOS 推荐 `Ctrl+Option+方向键`；Windows/Linux 可继续使用 `Ctrl+方向键`。
+- `Ctrl+上/左` 或 `Ctrl+Option+上/左`：当前高亮候选前移一位。
+- `Ctrl+下/右` 或 `Ctrl+Option+下/右`：当前高亮候选后移一位。
+- `Ctrl+Home` 或 `Ctrl+Option+Home`：当前高亮候选移到当前页第一位。
+- `Ctrl+End` 或 `Ctrl+Option+End`：当前高亮候选移到当前页最后一位。
 
-### 加词流程
+用户加词和调序会写入 `tigress.user.dict.yaml` 的自动生成区。减词会在匹配到的词库条目前写入禁用标记并注释原条目，同时也会在用户词库记录操作历史。
 
-1. 正常输入目标编码，例如先打出要挂词的编码。
-2. 按 `Ctrl+;` 进入加词模式。
-3. 输入组成新词的单字编码。
-4. 用空格、数字、`;` 或 `'` 选择候选字，已取到的字会显示在提示里。
-5. 按 `Enter` 确认加词。
+## 拼音与拆分提示
 
-### 减词流程
+拼音滤镜已去掉注释里的全角圆括号。候选框显示拼音或拆分时，可以用：
 
-1. 正常输入编码，让候选列表出现。
-2. 把焦点移动到要减掉的候选词。
-3. 按 `Ctrl+'` 进入减词模式，当前高亮候选会自动填入。
-4. 确认无误后按 `Enter`。
+- `Ctrl+Shift+Enter`：上屏候选注释中的拼音或拆分内容。
 
-如果默认带入的词不是目标词，可以用 `Backspace` 删除后重新取字。
+用户设置菜单里的拼音、拆分开关后面也会提示这个快捷键。
 
-### 调整词序
+## 鼠须管皮肤
 
-调词序不需要进入加词或减词模式。正常输入编码并移动焦点到目标候选后，直接使用 `Ctrl+方向键`、`Ctrl+Home` 或 `Ctrl+End` 即可。
-
-当前实现调整的是当前页可见候选顺序。调整后焦点会跟随被移动的词，方便连续调整。
-
-## 数据保存方式
-
-用户加词和调序会写入 `tigress.extended.dict.yaml` 的自动生成区。减词会在匹配到的词库条目前写入禁用标记并注释原条目，同时也会在扩展词库记录操作历史。
-
-涉及的词库文件：
-
-- `tigress.extended.dict.yaml`
-- `tigress.dict.yaml`
-- `tigress_ci.dict.yaml`
-- `tigress_simp_ci.dict.yaml`
-
-这样重新部署后，用户加过的词、减掉的词和调整过的顺序仍然生效。
-
-## 只移植加减词和调序功能
-
-如果只想把这个功能加到自己的 Rime 配置里，需要复制和修改这些文件。
-
-### 需要复制
-
-- `lua/tigress_user_words.lua`
-
-如果保留文件名和模块名不变，schema 中也要按下面的名字接入。
-
-### 需要修改 schema
-
-在目标方案的 `engine/processors` 中，把 Lua processor 放在 `key_binder` 前面：
-
-```yaml
-engine:
-  processors:
-    - ascii_composer
-    - recognizer
-    - lua_processor@*tigress_user_words*processor
-    - key_binder
-```
-
-在目标方案的 `engine/filters` 中，把 Lua filter 放在普通简繁、注释、去重等 filter 前面：
-
-```yaml
-engine:
-  filters:
-    - lua_filter@*tigress_user_words*filter
-    - uniquifier
-```
-
-如果原方案已经有类似 `lua_filter@core2022` 这种字集过滤器，可以保留在它后面：
-
-```yaml
-engine:
-  filters:
-    - lua_filter@core2022
-    - lua_filter@*tigress_user_words*filter
-    - simplifier@simplification
-    - uniquifier
-```
-
-### 需要按自己的词库改 Lua 配置
-
-打开 `lua/tigress_user_words.lua`，修改顶部的 `config`：
-
-```lua
-local config = {
-    extended_dict = "tigress.extended.dict.yaml",
-    source_dicts = {
-        "tigress.extended.dict.yaml",
-        "tigress.dict.yaml",
-        "tigress_ci.dict.yaml",
-        "tigress_simp_ci.dict.yaml",
-    },
-    weight_base = 100000000000,
-    weight_step = 1000,
-}
-```
-
-- `extended_dict`：用户加词和调序写入的扩展词库。
-- `source_dicts`：减词时会搜索并注释的词库文件列表。
-
-移植到其他方案时，把这些文件名改成自己方案实际使用的词库文件名。
-
-### 注意事项
-
-- 目标方案需要支持 Lua。
-- 修改 schema 后需要重新部署 Rime。
-- 如果目标方案已经占用了 `Ctrl+;`、`Ctrl+'` 或 `Ctrl+方向键`，需要在 Lua 里调整快捷键。
-- 这个功能不依赖 Rime 用户词库 DB；它会直接写入 YAML 词库文件。
+仓库包含 `squirrel.custom.yaml`。在 macOS 鼠须管下部署后，会使用当前配置里的皮肤和配色；Windows 小狼毫仍使用 `weasel.custom.yaml`。

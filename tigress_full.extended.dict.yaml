@@ -1,13 +1,13 @@
-# Rime dictionary: tigress.extended
+# Rime dictionary: tigress_full.extended
 # encoding: utf-8
 
 ---
-name: tigress.extended
+name: tigress_full.extended
 version: "2026.06.22"
 sort: by_weight
 use_preset_vocabulary: false
 import_tables:
-  - tigress.common
+  - tigress
   - tigress.user
 
 columns:

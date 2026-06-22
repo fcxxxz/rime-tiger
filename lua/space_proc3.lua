@@ -51,10 +51,10 @@ local function has_uppercase(str)
   return string.match(str, "%u") ~= nil
 end
 
---- 检查是否以斜杠开头
+--- 检查是否以反斜杠开头
 ---@param str string
-local function starts_with_slash(str)
-  return str and string.sub(str, 1, 1) == "/"
+local function starts_with_backslash(str)
+  return str and string.sub(str, 1, 1) == "\\"
 end
 
 ---@class SpaceEnv: Env
@@ -97,8 +97,8 @@ function space_proc.func(key_event, env)
     return kNoop
   end
 
-  -- 特殊处理：以斜杠开头的输入不算空码
-  if starts_with_slash(input) then
+  -- 特殊处理：以反斜杠开头的符号输入不算空码
+  if starts_with_backslash(input) then
     return kNoop
   end
 

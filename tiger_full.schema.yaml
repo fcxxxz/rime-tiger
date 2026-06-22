@@ -7,8 +7,8 @@ schema:
   description: |
     虎码官方单字
     敲 ` 鍵進入拼音反查
-  name: "虎码官方单字"
-  schema_id: tiger
+  name: "虎码官方单字·全字集"
+  schema_id: tiger_full
   version: 0.9
 
 
@@ -35,7 +35,7 @@ switches: # 0 默认关，1 默认开
     reset: 0
     states: [ 有刻, 半刻, 无刻 ]
   - name: charset_comment_filter  #字符集提示
-    reset: 0  
+    reset: 0
     states: [ U区关, U区开 ]
   - name: udpf_switch
     reset: 0
@@ -112,7 +112,7 @@ speller:
   # 若要添加四码上屏功能，在  ^;\w+ 后面 加上  |^\w{4}$  即可
 
 translator:
-  dictionary: tiger.extended
+  dictionary: tiger_full.extended
   enable_charset_filter: false
   enable_encoder: false
   enable_sentence: false
@@ -263,10 +263,10 @@ easy_english:
 chaifen:
   opencc_config: hu_cf.json
   option_name: chaifen
-  show_in_comment: true 
-  comment_format:     
+  show_in_comment: true
+  comment_format:
     - "xform/&nbsp;/ /"
-  tags:     
+  tags:
     - abc
     - tiger
     - tigress
