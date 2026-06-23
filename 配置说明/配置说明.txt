@@ -1,0 +1,198 @@
+虎码 Rime 配置说明
+==================
+
+这份说明给第一次接触本配置的人看。想调候选数、样式、按键，先看第四节。
+根目录里的 *.schema.yaml、*.custom.yaml 不要移动，Rime 会按这些文件名读取配置。
+同目录有两份示例文件：
+- 《示例.schema.yaml》：一份带中文注释的 schema 示例。
+- 《示例.custom.yaml》：一份带中文注释的 custom 示例。
+这两份只放在配置说明里给人看，Rime 不会读取。
+
+
+一、相比原版整理了什么
+--------------------------
+
+1. 常用字和全字集拆成独立方案
+   原版常见做法是强制加载全字集，常用字用过滤器在运行时筛候选。这版直接物理拆开，常用字只加载常用字集，提高一丝理论性能
+   常用字方案只引入常用字词典，全字集方案引入完整词典。
+   这样候选来源更直接，也更容易判断自己正在用哪个字集。
+
+2. 全字集作为父配置
+   全字集包含常用字，所以配置层级按“全字集 -> 常用字”组织。
+   常用字方案继承对应的全字集方案，再把词典入口覆盖成常用字。
+
+3. 四个方案共享公共底座
+   大部分按键、滤镜、符号、反查、空码处理都放在 tiger_base.schema.yaml。
+   四个方案共用的用户补丁放在 tiger_base.custom.yaml。
+   修改公共配置时，不需要在四个文件里重复改。
+
+4. 词库版保留加词、删词、调序
+   tigress 和 tigress_full 启用用户加词 Lua。
+   tiger 和 tiger_full 是单字方案，不写入词库用户词。
+
+5. 方案名显示字数
+   切换方案时能看到 9767 字、全字集 99144 字。
+
+
+二、四个方案怎么选
+------------------
+
+1. tiger
+   虎码单字 9767字
+   候选更干净，适合只打单字。
+
+2. tiger_full
+   虎码单字全字集 99144字
+   全字集包含常用字，适合需要生僻字、扩展字。
+
+3. tigress
+   虎码词库 9767字
+   适合日常打词，支持加词、删词、调序。
+
+4. tigress_full
+   虎码词库全字集 99144字
+   适合既要打词，又要更多生僻字。
+
+推荐：
+- 日常输入用 tigress。
+- 只想打单字用 tiger。
+- 经常需要生僻字，再选 tiger_full 或 tigress_full。
+
+
+三、配置文件分工
+----------------
+
+每个真实方案都有两类文件：
+
+1. *.schema.yaml
+   方案本体。这里放方案名、词典入口、处理流程。
+
+2. *.custom.yaml
+   用户补丁。这里放候选数、样式、按键、开关。
+
+一般优先改 *.custom.yaml。只有要改方案名、词典入口、处理流程时，再改
+*.schema.yaml。
+
+Rime 的方案字段叫 schema。tiger_base.schema.yaml 里也有 schema_id、name、
+description，方便阅读和继承；不要把 tiger_base 加入方案列表。
+
+
+四、继承关系
+------------
+
+schema 关系：
+
+  tiger_base.schema.yaml
+  ├─ tiger_full.schema.yaml          单字 · 全字集（父配置）
+  │  └─ tiger.schema.yaml            单字 · 常用字
+  └─ tigress_full.schema.yaml        词库 · 全字集（父配置）
+     └─ tigress.schema.yaml          词库 · 常用字
+
+custom 关系：
+
+  tiger_base.custom.yaml
+  ├─ tiger_full.custom.yaml          单字 · 全字集补丁（父配置）
+  │  └─ tiger.custom.yaml            单字 · 常用字补丁
+  └─ tigress_full.custom.yaml        词库 · 全字集补丁（父配置）
+     └─ tigress.custom.yaml          词库 · 常用字补丁
+
+读法：
+- 上面的文件先加载。
+- 下面的文件继承上面的配置，并覆盖自己的差异。
+- 全字集是常用字的父集，所以全字集放在常用字上面。
+
+
+五、想改配置，改哪个文件
+------------------------
+
+1. 四个方案都生效
+   改 tiger_base.custom.yaml。
+
+   适合：候选数量、候选编号、外观样式、通用按键。
+
+2. 单字版都生效：tiger + tiger_full
+   改 tiger_full.custom.yaml。
+
+3. 词库版都生效：tigress + tigress_full
+   改 tigress_full.custom.yaml。
+
+4. 只改单字常用：tiger
+   改 tiger.custom.yaml。
+
+5. 只改词库常用：tigress
+   改 tigress.custom.yaml。
+
+6. 只改方案名或词典入口
+   改对应的 *.schema.yaml。
+
+常见例子：
+- 想把候选数从 9 改成 5：改 tiger_base.custom.yaml。
+- 只想词库版启用某个样式：改 tigress_full.custom.yaml。
+- 只想常用词库改一个特殊按键：改 tigress.custom.yaml。
+- 想改方案在切换菜单里的名字：改对应的 *.schema.yaml。
+
+
+六、常用字和全字集怎么来的
+--------------------------
+
+单字版：
+- tiger_full.extended 引入 tiger，所以是全字集。
+- tiger.extended 引入 tiger.common，所以是常用字。
+
+词库版：
+- tigress_full.extended 引入 tigress，所以是全字集。
+- tigress.extended 引入 tigress.common，所以是常用字。
+
+全字集包含常用字。当前统计：
+- 常用字：9767 字
+- 全字集：99144 字
+
+
+七、加词、删词、调序
+--------------------
+
+启用范围：
+- tigress
+- tigress_full
+
+未启用：
+- tiger
+- tiger_full
+
+快捷键：
+- Ctrl+; 进入加词
+- Ctrl+' 进入删词/屏蔽候选
+- Ctrl+方向键 调整候选顺序
+- macOS 可用 Ctrl+Option+方向键
+
+用户词和调序记录写入 tigress.user.dict.yaml。
+
+
+八、不要动这些
+--------------
+
+1. 不要把 *.schema.yaml / *.custom.yaml 移进文件夹。
+   Rime 在根目录按文件名读取它们。
+
+2. 不要把 tiger_base 加进 default.custom.yaml 的 schema_list。
+   tiger_base 是公共底座，放进方案列表会让切换菜单出现一个不该选的配置项。
+
+3. 不要删除 tiger_base.schema.yaml / tiger_base.custom.yaml。
+   四个方案都依赖它们。
+
+4. 不要把加词 Lua 加到 tiger / tiger_full。
+   单字方案保持单字逻辑，用户词管理交给词库方案。
+
+
+九、改完怎么生效
+----------------
+
+改完配置后重新部署 Rime。
+
+macOS 鼠须管：
+从输入法菜单选择“重新部署”。
+
+Windows 小狼毫：
+右键输入法图标，选择“重新部署”。
+
+部署失败时，先检查刚改过的 YAML 缩进，尤其是冒号后面的空格和列表缩进。

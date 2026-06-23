@@ -21,7 +21,7 @@ switches: # 0 默认关，1 默认开
     states: [ "拼", "pīn Ctrl+Shift+Enter上屏拼音" ]
   - name: emoji_cn  #emoji滤镜
     reset: 0
-    states: [ 🈚, 🈶 ]
+    states: [ 🈚表情, 🈶表情 ]
   # - name: chaifen
   #   reset: 0 
   #   states: [ 拆隐, 拆显 ]
@@ -37,7 +37,7 @@ switches: # 0 默认关，1 默认开
     states: [ 简中, 繁中 ]
   - options: [_keyboard_default, _keyboard_defaultbk, _keyboard_defaultwk]
     reset: 0
-    states: [ 有刻, 半刻, 无刻 ]
+    states: [ 键显全, 键显半, 键显无 ]
   - name: charset_comment_filter  #字符集提示
     reset: 0  
     states: [ U区关, U区开 ]

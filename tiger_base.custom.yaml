@@ -1,0 +1,101 @@
+# 这份文件是四个虎码方案的“共同补丁底座”。
+#
+# 补丁关系图：
+#   tiger_base.custom.yaml
+#   ├─ tiger_full.custom.yaml          单字 · 全字集补丁（父集）
+#   │  └─ tiger.custom.yaml            单字 · 常用字补丁
+#   └─ tigress_full.custom.yaml        词库 · 全字集补丁（父集）
+#      └─ tigress.custom.yaml          词库 · 常用字补丁
+#
+# 修改指南：
+#   1. 四个方案都要生效的候选数、样式、按键：改本文件。
+#   2. 单字全字集和单字常用都要生效：改 tiger_full.custom.yaml。
+#   3. 只改单字常用：改 tiger.custom.yaml。
+#   4. 词库全字集和词库常用都要生效：改 tigress_full.custom.yaml。
+#   5. 只改词库常用：改 tigress.custom.yaml。
+
+#下面的 #号 是注释符，注释了就无效了，删掉即可生效
+
+patch:
+  #translator/enable_completion: true # 编码提示，默认关闭，删掉行首的#号，即可开启
+  #speller/auto_select_pattern: ^;\w+|^\w{4}$  # 四码上屏功能，删掉行首的#号，即可开启
+  #speller/alphabet: "['zyxwvutsrqponmlkjihgfedcba]" # 取消分号引导的快符功能（分号不作码元），删掉行首#号即可生效
+  #style/mark_text: " " #编号前标志，这里是空格，可在引号里可以自己加东西替换，如 "😅"
+  #style/layout/border_width: 2 #边框宽度，默认是0
+  #style/layout/border_height: 2 #边框高度，默认是0
+
+  menu/page_size: 9 # 自定义候选个数，可修改。若要改成5个，行首加上#号注释即可（Rime默认就是5个）
+  #style/horizontal: true # 默认是false竖排显示，删掉行首的#号，可横排显示（横排建议把上面这行注释掉）
+  #style/layout/candidate_spacing: 17 #候选框改为横排后,增加 候选与候选 的间距
+  #style/layout/hilite_spacing: 8  #候选框改为横排后,增加 标号与候选 的间距
+  #style/layout/min_width: 85  #候选框改为横排后,增加最小宽度
+  #style/layout/max_width: 1200 #候选框改为横排后，限制最大宽度，超长自动换行
+  # 横排显示建议把下面这行也注释掉，换成阿拉伯数字标号
+  menu/alternative_select_labels: [ ㊀, ㊁, ㊂, ㊃, ㊄, ㊅, ㊆, ㊇, ㊈ ]  # 自定义候选序号显示符，可自定修改，如要显示阿拉伯数字，直接注释掉这行（在前面加#号）
+  # 以下是备选样式（自行删除#号即可生效，只能生效一种）
+  #menu/alternative_select_labels: [ ①,②,③,④,⑤,⑥,⑦,⑧,⑨,⑩ ]
+  #menu/alternative_select_labels: [ ❶,❷,❸,❹,❺,❻,❼,❽,❾,❿ ]
+  #menu/alternative_select_labels: [ ⓵,⓶,⓷,⓸,⓹,⓺,⓻,⓼,⓽,⓾ ]
+  #menu/alternative_select_labels: [ ㊀,㊁,㊂,㊃,㊄,㊅,㊆,㊇,㊈,㊉ ]
+  #menu/alternative_select_labels: [ ㈠,㈡,㈢,㈣,㈤,㈥,㈦,㈧,㈨,㈩ ]
+  #menu/alternative_select_labels: [ 🀇,🀈,🀉,🀊,🀋,🀌,🀍,🀎,🀏,🀄 ]
+  #menu/alternative_select_labels: [ Ⅰ,Ⅱ,Ⅲ,Ⅳ,Ⅴ,Ⅵ,Ⅶ,Ⅷ,Ⅸ,Ⅹ ]
+  #menu/alternative_select_labels: [ ⅰ,ⅱ,ⅲ,ⅳ,ⅴ,ⅵ,ⅶ,ⅷ,ⅸ,ⅹ ]
+  #menu/alternative_select_labels: [ Ⓐ,Ⓑ,Ⓒ,Ⓓ,Ⓔ,Ⓕ,Ⓖ,Ⓗ,Ⓘ,Ⓙ ]
+  #menu/alternative_select_labels: [ ⓐ,ⓑ,ⓒ,ⓓ,ⓔ,ⓕ,ⓖ,ⓗ,ⓘ,ⓙ ]
+
+  #style/preedit_type: preview # 嵌入首选项内容(字词)。有4个选项可设：input 嵌入输入码 | composition 嵌入编码 | preview 嵌入首选项 | preview_all 嵌入全部内容
+  #style/layout/margin_y : -1 # 启用后可隐藏候选框(盲打)，建议配合上面的嵌入首选项，一起使用
+
+  #style/inline_preedit: false # 嵌入编码模式，默认是true开启，若想关闭，取消注释即可（删除前面的#号）
+
+  # 去掉圆角 新小狼毫（Win）
+  #style/layout/corner_radius: 0 #候选圆角
+  #style/layout/round_corner: 0 #高亮圆角
+
+  # 竖排候选框超时长自动倒序
+  style/vertical_auto_reverse: false # 默认启用，若想关闭，将该行行首的#删掉
+
+  # #候选字体
+  #style/font_face: "Consolas, Segoe UI Emoji, Noto Color Emoji, LXGW WenKai GB Screen, SimSun, SimSun-ExtB, SimSun-ExtG, TH-Tshyn-P0, TH-Tshyn-P1, TH-Tshyn-P2, TH-Tshyn-P16"
+  #style/font_point: 15 #主字体字号
+  # #滤镜内容字体
+  #style/comment_font_face: "Consolas, Segoe UI Emoji, Noto Color Emoji, TumanPUA, LXGW WenKai GB Screen, SimSun, SimSun-ExtB, SimSun-ExtG, TH-Tshyn-P0, TH-Tshyn-P1, TH-Tshyn-P2, TH-Tshyn-P16"
+  #style/comment_font_point: 15 # 滤镜内容字号
+  # #候选前编号标志字体
+  #style/label_font_face: "LXGW WenKai GB Screen, SimSun, SimSun-ExtB, SimSun-ExtG, TH-Tshyn-P0, TH-Tshyn-P1, TH-Tshyn-P2, TH-Tshyn-P16"
+  #style/label_font_point: 15 #候选前编号标志字号
+
+
+  # 去除拼音滤镜的括号，如对括号有需求，可在下面5行前面加上#号注释掉
+  #pinyin/comment_format:
+   #- 'xform/&nbsp;/ /'
+   #- 'xform/^/ /'
+   #- 'xform/（//'
+   #- 'xform/）//'
+  # 也可自己把 （ 替换成别的，比如 'xform/（/〔/'
+
+  # 让【 】可以直接上屏（对应的重复上屏的功能也没了）
+  #speller/alphabet: ";'zyxwvutsrqponmlkjihgfedcba"
+
+  # 让 ' 直接上屏成 ‘’（放弃 ' 的单字重复，临时英文反查也一起没了 —— 不用）
+  # 关键是 affix_segmentor@easy_english 会把 ' 注册成前缀键强制进组合，光改 alphabet 没用，必须整段替换 segmentors
+  speller/alphabet: "[;zyxwvutsrqponmlkjihgfedcba]"
+  engine/segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  engine/translators:
+    - punct_translator
+    - lua_translator@symbol_hint_translator #反斜杠符号提示
+    - reverse_lookup_translator
+    - table_translator
+    - history_translator@historyDM
+    - history_translator@historyDM3
+    - history_translator@historySJ
+    - lua_translator@number_translator
+    - lua_translator@calculator_translator
+    - lua_translator@shijian2_translator
+  recognizer/patterns/easy_english: ""

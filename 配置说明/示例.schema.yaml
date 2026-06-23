@@ -1,0 +1,436 @@
+# Rime schema 示例
+# encoding: utf-8
+#
+# 这个文件放在“配置说明”目录里，只给用户参考，Rime 不会读取。
+# 真正生效的 *.schema.yaml 必须放在 Rime 用户目录根部。
+#
+# schema 管方案本体：方案名、词典入口、开关、引擎流程、拼写规则、标点、
+# 反查、滤镜、Lua 挂载、默认按键等。
+#
+# 当前虎码继承关系：
+#   tiger_base.schema.yaml
+#   ├─ tiger_full.schema.yaml          单字 · 全字集，父配置
+#   │  └─ tiger.schema.yaml            单字 · 常用字
+#   └─ tigress_full.schema.yaml        词库 · 全字集，父配置
+#      └─ tigress.schema.yaml          词库 · 常用字
+#
+# 全字集包含常用字，所以常用字继承全字集。
+
+
+# 一、继承上级 schema
+# ------------------
+# tiger_base.schema.yaml 不写 __include。
+# tiger_full.schema.yaml 写：__include: tiger_base.schema:/
+# tiger.schema.yaml 写：__include: tiger_full.schema:/
+# tigress_full.schema.yaml 写：__include: tiger_base.schema:/
+# tigress.schema.yaml 写：__include: tigress_full.schema:/
+__include: tiger_full.schema:/
+
+
+# 二、方案基本信息
+# ----------------
+schema:
+  schema_id: tiger  # 必须和文件名前缀一致：tiger.schema.yaml -> tiger
+  name: "虎码单字 9767字"  # 切换方案时显示的名字，尽量短，不用逗号
+  version: 0.9
+  author:
+    - {}
+  dependencies:
+    - PY_c  # 拼音反查依赖
+    - easy_english  # 临时英文依赖
+  description: |
+    虎码官方单字
+    字集：9767 字
+    敲 ` 键进入拼音反查
+
+
+# 三、状态开关
+# ------------
+# reset: 0 表示默认第一个状态，reset: 1 表示默认第二个状态。
+# name 是普通开关；options 是一组选项开关。
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中文, 西文 ]  # 中英文状态
+  - name: pinyin
+    reset: 0
+    states: [ "拼", "pīn Ctrl+Shift+Enter上屏拼音" ]  # 拼音滤镜
+  - name: emoji_cn
+    reset: 0
+    states: [ 🈚表情, 🈶表情 ]  # emoji 表情关/开
+  - name: chaifen
+    reset: 0
+    states: [ "拆隐", "拆显 Ctrl+Shift+Enter上屏拆分" ]  # 拆分提示
+  - name: simplification
+    reset: 0
+    states: [ 简中, 繁中 ]  # 简繁切换
+  - name: charset_comment_filter
+    reset: 0
+    states: [ U区关, U区开 ]  # Unicode 分区提示
+  - name: udpf_switch
+    reset: 0
+    states: [ U编关, U编开 ]  # Unicode 编码提示
+  - name: ascii_punct
+    reset: 0
+    states: [ 。，, ．， ]  # 中英标点
+  - name: full_shape
+    reset: 0
+    states: [ 半角, 全角 ]  # 全半角
+  - options: [ _keyboard_default, _keyboard_defaultzj ]
+    reset: 0
+    states: [ 助记关, 助记开 ]  # 键盘助记提示关/开
+  - options: [ _keyboard_default, _keyboard_defaultbk, _keyboard_defaultwk ]
+    reset: 0
+    states: [ 键显全, 键显半, 键显无 ]  # 键盘按键提示：全显/半显/隐藏
+
+
+# 四、引擎流程
+# ------------
+# processors 处理按键；segmentors 切分输入码；translators 产出候选；
+# filters 过滤和修饰候选。顺序会影响实际行为。
+engine:
+  processors:
+    - ascii_composer  # 处理中英文状态
+    - recognizer  # 识别反查、符号、表达式等输入模式
+    - lua_processor@*space_proc3  # 空码处理
+    - lua_processor@*symbol_proc  # 候选唯一时符号顶字
+    # - lua_processor@*tigress_user_words*processor  # 词库版加词、删词、调序；单字版不要加
+    - key_binder  # 快捷键绑定
+    - speller  # 编码处理
+    - punctuator  # 标点处理
+    - lua_processor@exe_processor  # exe 启动器
+    - selector  # 候选选择
+    - navigator  # 候选导航
+    - express_editor  # 上屏编辑
+  segmentors:
+    - ascii_segmentor  # 西文段
+    - matcher  # 匹配 recognizer 的 pattern
+    - affix_segmentor@easy_english  # 临时英文
+    - abc_segmentor  # 普通编码段
+    - punct_segmentor  # 标点段
+    - fallback_segmentor  # 兜底
+  translators:
+    - punct_translator  # 标点翻译
+    - lua_translator@symbol_hint_translator  # 反斜杠符号提示
+    - reverse_lookup_translator  # 拼音反查
+    - table_translator  # 主码表翻译器
+    - table_translator@easy_english  # 临时英文
+    - history_translator@historyDM  # 重复上屏
+    - history_translator@historyDM2
+    - history_translator@historyDM3
+    - history_translator@historySJ
+    - lua_translator@number_translator  # 数字转大写
+    - lua_translator@calculator_translator  # 简易计算器
+    - lua_translator@shijian2_translator  # 时间
+  filters:
+    # - lua_filter@*tigress_user_words*filter  # 词库版用户词过滤与调序；单字版不要加
+    # - charset_filter@gb2312  # 字符集过滤示例
+    # - charset_filter@gbk
+    # - charset_filter@utf8
+    - simplifier@simplification  # 简繁滤镜
+    - simplifier@pinyin  # 拼音滤镜
+    - simplifier@chaifen  # 拆分滤镜
+    - simplifier@emoji_cn  # emoji 滤镜
+    - lua_filter@charset_comment_filter  # Unicode 分区提示
+    - lua_filter@lua_unicode_display_filter  # Unicode 编码显示
+    - uniquifier  # 去重
+
+
+# 五、拼写规则
+# ------------
+speller:
+  alphabet: "[;'zyxwvutsrqponmlkjihgfedcba]"  # 可参与编码的字符
+  initials: "abcdefghijklmnopqrstuvwxyz;'"  # 可作为编码开头的字符
+  delimiter: " '"  # 多段编码分隔符
+  max_code_length: 4  # 最长编码长度
+  auto_select: true  # 允许自动上屏
+  auto_select_pattern: ^;\w+  # 分号引导编码候选唯一时自动上屏
+  # auto_select_pattern: ^;\w+|^\w{4}$  # 普通编码满 4 码也自动上屏
+  auto_clear: max_length  # manual 手动清；auto 空码自动清；max_length 到最长码清
+  # algebra 是编码变换规则，拼音/双拼/模糊音常用；虎码一般少动。
+  # algebra:
+  #   - derive/^([zcs])h/$1/  # 模糊音示例：zh/ch/sh -> z/c/s
+
+
+# 六、主翻译器
+# ------------
+translator:
+  dictionary: tiger.extended  # 词典入口；常用字用 tiger.extended，全字集用 tiger_full.extended
+  # prism: tiger  # 可指定棱镜名；通常和 schema_id 一致，没特殊需求可省略
+  enable_charset_filter: false  # 允许 charset_filter 工作
+  enable_encoder: false  # 允许自动造词编码
+  enable_sentence: false  # 连打造句；形码一般关闭
+  enable_user_dict: false  # Rime 用户词典；本配置用独立用户词典文件和 Lua 管理
+  encode_commit_history: false  # 根据上屏历史造词
+  enable_completion: false  # 编码提示，true 开启，false 关闭
+  # max_phrase_length: 4  # 自动造词最大词长
+  # initial_quality: 0  # 候选初始权重
+  comment_format:
+    - "xform/~/ /"  # 去掉编码提示前的 ~
+  preedit_format:
+    # - "xform/^/虎码 /"  # 预编辑显示格式示例
+
+
+# 七、临时英文翻译器
+# ------------------
+easy_english:
+  dictionary: easy_english
+  enable_completion: true  # 临时英文编码提示
+  prefix: "'"  # ' 进入临时英文
+  suffix: "`"  # ` 结束临时英文
+  tips: "〔英文〕"
+
+
+# 八、拼音反查
+# ------------
+reverse_lookup:
+  dictionary: PY_c
+  prefix: "`"  # ` 进入拼音反查
+  tips: "〔拼音〕"
+  preedit_format:
+    - "xform/([nl])v/$1ü/"
+    - "xform/([nl])ue/$1üe/"
+    - "xform/([jqxy])v/$1u/"
+  comment_format:
+    - "xform/^/ /"
+  # suffix: "'"  # 可设置反查结束键
+
+
+# 九、标点和符号
+# --------------
+punctuator:
+  import_preset: symbols  # 引入 symbols.yaml
+  full_shape:
+    " ": { commit: "　" }  # 全角空格
+    ",": { commit: ， }
+    ".": { commit: 。 }
+    "?": { commit: ？ }
+    "!": { commit: ！ }
+  half_shape:
+    ",": { commit: ， }  # 中文状态下逗号输出中文逗号
+    ".": { commit: 。 }
+    "?": { commit: ？ }
+    "!": { commit: ！ }
+    "`": "`"  # 保留给拼音反查
+  symbols:
+    "/fh": [ ©, ®, ™, ℗ ]  # 自定义符号菜单示例
+
+
+# 十、滤镜配置
+# ------------
+simplification:
+  option_name: simplification  # 对应 switches 里的 name
+  opencc_config: s2t.json  # 简转繁
+  tips: all  # all 显示所有提示；char 只显示单字提示；none 不显示
+  tags: [ abc ]  # 作用到哪些 tag
+
+pinyin:
+  option_name: pinyin
+  opencc_config: PYCharacters.txt
+  tips: all
+  comment_format:
+    - "xform/^/ /"
+
+chaifen:
+  option_name: chaifen
+  tips: all
+
+emoji_cn:
+  option_name: emoji_cn
+  opencc_config: emoji.json
+  tips: all
+
+
+# 十一、按键绑定
+# --------------
+key_binder:
+  # import_preset: default  # 需要默认按键时可启用
+  bindings:
+    - { accept: space, send: space, when: has_menu }  # 有候选时空格上屏首选
+    - { accept: space, send: Escape, when: composing }  # 空码时空格清屏
+    - { accept: semicolon, send: 2, when: has_menu }  # 分号选第 2 个
+    - { accept: apostrophe, send: 3, when: has_menu }  # 单引号选第 3 个
+    - { accept: Tab, send: Escape, when: composing }  # Tab 清屏
+    - { accept: minus, send: Page_Up, when: has_menu }  # - 上一页
+    - { accept: equal, send: Page_Down, when: has_menu }  # = 下一页
+    - { accept: "Control+o", toggle: simplification, when: composing }  # 简繁
+    - { accept: "Control+p", toggle: pinyin, when: composing }  # 拼音提示
+    - { accept: "Control+i", toggle: emoji_cn, when: composing }  # emoji
+    - { accept: "Control+u", toggle: charset_comment_filter, when: composing }  # U 区
+    - { accept: "Control+y", toggle: udpf_switch, when: composing }  # U 编码
+    - { accept: "Control+j", toggle: chaifen, when: composing }  # 拆分
+    - { accept: Right, send: Down, when: has_menu }  # 右键移动候选焦点
+    - { accept: Left, send: Up, when: has_menu }  # 左键移动候选焦点
+    - { accept: "Control+period", toggle: ascii_punct, when: always }  # 中英标点
+    # - { accept: "Shift+space", toggle: full_shape, when: always }  # 全半角
+
+
+# 十二、识别规则
+# --------------
+recognizer:
+  import_preset: default
+  patterns:
+    punct: '^\\([0-9]0?|[A-Za-z]*)$'  # 反斜杠符号
+    reverse_lookup: "^`[a-z]*'?$"  # 拼音反查
+    easy_english: "^'[A-Z|a-z]*`?$"  # 临时英文
+    expression: "^=.*$"  # 计算
+    # uppercase: ""  # 大写直接上屏示例
+
+
+# 十三、菜单默认值
+# ----------------
+menu:
+  page_size: 9  # 候选数量
+  alternative_select_labels: [ ㊀, ㊁, ㊂, ㊃, ㊄, ㊅, ㊆, ㊇, ㊈ ]  # 候选编号
+
+
+# 十四、历史上屏示例
+# ------------------
+historyDM:
+  input: "["
+  size: 1
+  initial_quality: 0
+
+historySJ:
+  input: "z"
+  size: 1
+  initial_quality: 0
+
+
+# 十五、自定义短语翻译器
+# ----------------------
+# 适合放固定短语、邮箱、地址、签名等。
+# 使用时还要在 engine/translators 里加入 table_translator@custom_phrase。
+custom_phrase:
+  dictionary: ""  # 空字符串表示不使用普通词典文件
+  user_dict: custom_phrase  # 用户短语数据库名
+  db_class: stabledb  # stabledb 适合手工维护的固定短语
+  enable_completion: false
+  enable_sentence: false
+  initial_quality: 1  # 候选权重，越高越靠前
+
+
+# 十六、affix_segmentor 前缀段
+# ----------------------------
+# affix_segmentor 常用于临时英文、反查、特殊输入模式。
+# 组件名里的 @easy_english 要和 engine/segmentors 里的 affix_segmentor@easy_english 对上。
+easy_english:
+  tag: easy_english  # 这段输入的标签
+  prefix: "'"  # 以 ' 进入
+  suffix: "`"  # 以 ` 结束
+  tips: "〔英文〕"
+  closing_tips: "〔虎码〕"
+  extra_tags:
+    - abc  # 允许普通编码段参与混合处理
+
+
+# 十七、segmentor 标签
+# --------------------
+# 某些滤镜、翻译器只对特定 tag 生效。
+abc_segmentor:
+  extra_tags:
+    # - reverse_lookup  # 允许普通编码和反查混合，通常不建议虎码这么做
+
+matcher:
+  # 配合 recognizer/patterns 使用。一般继承默认即可。
+
+
+# 十八、selector 和 navigator
+# ---------------------------
+# selector 管候选选择，navigator 管光标和翻页。多数方案不需要单独写。
+selector:
+  bindings:
+    ISO_Left_Tab: previous_candidate  # Shift+Tab 上一个候选
+    Shift+Tab: previous_candidate
+    Tab: next_candidate  # Tab 下一个候选
+
+
+# 十九、编辑器
+# ------------
+# express_editor：码表方案常用，确认后直接提交。
+# fluency_editor：语句流方案常用，适合拼音长句。
+# fluid_editor：流式编辑器，适合特定拼音方案。
+# 本虎码使用 express_editor，见 engine/processors。
+
+
+# 二十、八股文 / grammar 语言模型
+# -------------------------------
+# 部分拼音方案会用 grammar 提升整句排序。虎码形码通常不需要。
+# 若使用，需要共享目录或用户目录中有对应 grammar 文件，并在根部 __patch 引入。
+grammar:
+  language: zh-hans-t-essay-bgw
+  collocation_max_length: 5
+  collocation_min_length: 2
+
+
+# 二十一、schema 根部 __patch
+# --------------------------
+# Rime 默认会自动给 <schema_id>.schema.yaml 加载同名 custom：
+#   __patch: <schema_id>.custom:/patch?
+#
+# 如果你在 schema 根部手写 __patch，自动加载会停止。
+# 这时要自己把同名 custom 加回来：
+#
+# __patch:
+#   - grammar:/hans?  # 可选：引入 grammar 配置
+#   - tiger.custom:/patch?  # 保留同名 custom 补丁
+#
+# 当前虎码不在真实 schema 根部手写 __patch，保持 Rime 自动加载 custom。
+
+
+# 二十二、词典文件关系提示
+# ------------------------
+# translator/dictionary 指向的是词典名，不带 .dict.yaml 后缀。
+# 例如 dictionary: tiger.extended 会读取 tiger.extended.dict.yaml。
+#
+# 常用字：
+#   tiger.extended -> tiger.common + tiger.user
+#   tigress.extended -> tigress.common + tigress.user
+#
+# 全字集：
+#   tiger_full.extended -> tiger + tiger.user
+#   tigress_full.extended -> tigress + tigress.user
+#
+# 词典本体配置在 *.dict.yaml 里，常见字段包括：
+#   name、version、sort、use_preset_vocabulary、import_tables、columns、encoder。
+
+
+# 二十三、dict 文件结构示例
+# -------------------------
+# 下面是 *.dict.yaml 的常见结构示例。这里只作注释展示，真正词典文件要单独保存。
+#
+# # Rime dictionary: tiger.extended
+# # encoding: utf-8
+# ---
+# name: tiger.extended  # 词典名，对应 translator/dictionary
+# version: "2026.06.22"
+# sort: by_weight  # by_weight 按权重排序；original 保持原顺序
+# use_preset_vocabulary: false  # 是否使用八股文预设词汇
+# import_tables:
+#   - tiger.common  # 引入常用字词典
+#   - tiger.user  # 引入用户自定义词典
+# columns:
+#   - text  # 字或词
+#   - code  # 编码
+#   - weight  # 权重
+#   - stem  # 造词用编码信息，可选
+# encoder:
+#   rules:
+#     - length_equal: 2
+#       formula: "AaAbBaBb"
+#     - length_equal: 3
+#       formula: "AaBaCaCb"
+#     - length_in_range: [4, 99]
+#       formula: "AaBaCaZa"
+# ...
+#
+# 词条格式示例，字段之间用 Tab：
+# 阳	to	100000000
+# 自定义词	abcd	100000000
+
+
+# 二十四、OpenCC 配置文件提示
+# ---------------------------
+# opencc/*.txt 是字词转换表，json 配置负责把这些表串起来。
+# simplifier/opencc_config 指向 json 配置名。
+# 如果只改转换表，通常不用改 schema；如果新增一套转换规则，需要补 json。

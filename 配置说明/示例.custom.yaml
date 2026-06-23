@@ -1,0 +1,500 @@
+# Rime custom 示例
+# encoding: utf-8
+#
+# 这个文件放在“配置说明”目录里，只给用户参考，Rime 不会读取。
+# 真正生效的 *.custom.yaml 必须放在 Rime 用户目录根部。
+#
+# custom 管用户补丁：方案列表、候选数、候选编号、样式、快捷键、
+# 开关默认值、标点、识别规则，以及按方案覆盖的配置。
+#
+# 当前虎码补丁继承关系：
+#   tiger_base.custom.yaml
+#   ├─ tiger_full.custom.yaml          单字 · 全字集补丁，父配置
+#   │  └─ tiger.custom.yaml            单字 · 常用字补丁
+#   └─ tigress_full.custom.yaml        词库 · 全字集补丁，父配置
+#      └─ tigress.custom.yaml          词库 · 常用字补丁
+#
+# 文件里已有 patch 时，把新配置加到原来的 patch 下面，不要写第二个 patch。
+
+
+patch:
+  # 一、继承上级补丁
+  # ----------------
+  # tiger_base.custom.yaml 不写 __include。
+  # tiger_full.custom.yaml 写：__include: tiger_base.custom:/patch
+  # tiger.custom.yaml 写：__include: tiger_full.custom:/patch
+  # tigress_full.custom.yaml 写：__include: tiger_base.custom:/patch
+  # tigress.custom.yaml 写：__include: tigress_full.custom:/patch
+  __include: tiger_full.custom:/patch
+
+
+  # 二、词典入口
+  # ------------
+  # tiger：tiger.extended
+  # tiger_full：tiger_full.extended
+  # tigress：tigress.extended
+  # tigress_full：tigress_full.extended
+  translator/dictionary: tiger.extended
+
+
+  # 三、候选菜单
+  # ------------
+  menu/page_size: 9  # 候选数量；Rime 默认 5
+  menu/alternative_select_labels: [ ㊀, ㊁, ㊂, ㊃, ㊄, ㊅, ㊆, ㊇, ㊈ ]  # 候选编号
+  # menu/alternative_select_keys: "123456789"  # 候选选择键，通常不用改
+
+
+  # 四、speller 拼写相关
+  # --------------------
+  translator/enable_completion: false  # 编码提示；true 开启，false 关闭
+  translator/enable_sentence: false  # 连打造句；形码一般关闭
+  translator/enable_user_dict: false  # Rime 用户词典开关
+  translator/enable_encoder: false  # 自动造词编码
+  translator/encode_commit_history: false  # 根据上屏历史造词
+  speller/auto_select: true  # 允许自动上屏
+  speller/auto_select_pattern: ^;\w+  # 只让分号引导编码唯一时自动上屏
+  # speller/auto_select_pattern: ^;\w+|^\w{4}$  # 普通编码满 4 码也自动上屏
+  speller/auto_clear: max_length  # manual 手动清；auto 空码自动清；max_length 到最长码清
+
+
+  # 五、开关默认状态
+  # ----------------
+  # switches 是列表，下标从 0 开始。这里按 tiger_base.schema.yaml 当前顺序举例。
+  switches/@0/reset: 0  # ascii_mode：0 中文，1 西文
+  switches/@1/reset: 0  # pinyin：0 关，1 开
+  switches/@2/reset: 0  # emoji_cn：0 关，1 开
+  switches/@3/reset: 0  # chaifen：0 关，1 开
+  switches/@4/reset: 0  # simplification：0 简体，1 繁体
+  # switches/@0/states: [ 中文, 西文 ]  # 也可以改开关显示文字
+
+
+  # 六、空格和常用快捷键
+  # --------------------
+  # key_binder/bindings 是列表，写了这里会替换整组按键。
+  key_binder/bindings:
+    - { accept: space, send: space, when: has_menu }  # 有候选时空格上屏首选
+    - { accept: space, send: Escape, when: composing }  # 空码时空格清屏
+    - { accept: semicolon, send: 2, when: has_menu }  # 分号选第 2 个
+    - { accept: apostrophe, send: 3, when: has_menu }  # 单引号选第 3 个
+    - { accept: Tab, send: Escape, when: composing }  # Tab 清屏
+    - { accept: minus, send: Page_Up, when: has_menu }  # - 上一页
+    - { accept: equal, send: Page_Down, when: has_menu }  # = 下一页
+    - { accept: "Control+o", toggle: simplification, when: composing }  # 简繁
+    - { accept: "Control+p", toggle: pinyin, when: composing }  # 拼音提示
+    - { accept: "Control+i", toggle: emoji_cn, when: composing }  # emoji
+    - { accept: "Control+u", toggle: charset_comment_filter, when: composing }  # U 区
+    - { accept: "Control+y", toggle: udpf_switch, when: composing }  # U 编码
+    - { accept: "Control+j", toggle: chaifen, when: composing }  # 拆分
+    - { accept: Right, send: Down, when: has_menu }  # 右键移动候选焦点
+    - { accept: Left, send: Up, when: has_menu }  # 左键移动候选焦点
+    - { accept: "Control+period", toggle: ascii_punct, when: always }  # 中英标点
+    # - { accept: "Shift+space", toggle: full_shape, when: always }  # 全半角
+
+
+  # 七、中英文切换键
+  # ----------------
+  ascii_composer/good_old_caps_lock: true
+  ascii_composer/switch_key:
+    Caps_Lock: clear  # Caps Lock 切英文并清屏
+    Control_L: noop  # 左 Ctrl 不切换
+    Control_R: noop  # 右 Ctrl 不切换
+    Eisu_toggle: clear
+    Shift_L: commit_code  # 左 Shift：编码上屏并切英文
+    Shift_R: commit_code  # 右 Shift：编码上屏并切英文
+    # 可选值：
+    # noop 不处理
+    # clear 清屏并切换
+    # commit_code 编码上屏并切换
+    # commit_text 候选文字上屏并切换
+    # inline_ascii 临时西文，回车上屏后回中文
+
+
+  # 八、方案列表和方案菜单
+  # ----------------------
+  # 这段适合 default.custom.yaml。不要把 tiger_base 加进去。
+  schema_list:
+    - { schema: tiger }  # 单字常用
+    - { schema: tiger_full }  # 单字全字集
+    - { schema: tigress }  # 词库常用
+    - { schema: tigress_full }  # 词库全字集
+    - { schema: PY_c }  # 拼音
+  switcher/hotkeys:
+    - "Control+grave"  # Ctrl+` 打开方案菜单
+    - "Control+F8"  # 备用快捷键
+  switcher/save_options:
+    - ascii_punct  # 保存中英标点状态
+    - simplification  # 保存简繁状态
+  switcher/fold_options: true  # 折叠选项
+  switcher/abbreviate_options: true  # 简写选项名
+
+
+  # 九、标点和符号
+  # --------------
+  punctuator/import_preset: symbols  # 引入 symbols.yaml
+  punctuator/full_shape:
+    " ": { commit: "　" }
+    ",": { commit: ， }
+    ".": { commit: 。 }
+    "?": { commit: ？ }
+    "!": { commit: ！ }
+  punctuator/half_shape:
+    ",": { commit: ， }
+    ".": { commit: 。 }
+    "?": { commit: ？ }
+    "!": { commit: ！ }
+    "`": "`"  # 保留给拼音反查
+    "/": "/"  # 保留普通斜杠
+  punctuator/symbols:
+    "/fh": [ ©, ®, ™, ℗ ]  # 自定义符号菜单
+    "/jt": [ ↑, ↓, ←, →, ↖, ↗, ↙, ↘ ]
+
+
+  # 十、识别规则
+  # ------------
+  recognizer/import_preset: default
+  recognizer/patterns/punct: '^\\([0-9]0?|[A-Za-z]*)$'
+  recognizer/patterns/reverse_lookup: "^`[a-z]*'?$"  # 拼音反查
+  recognizer/patterns/easy_english: "^'[A-Z|a-z]*`?$"  # 临时英文
+  recognizer/patterns/expression: "^=.*$"  # 计算
+  # recognizer/patterns/reverse_lookup: ""  # 关闭 ` 拼音反查
+
+
+  # 十一、恢复或关闭临时英文
+  # ------------------------
+  # 当前虎码 custom 让 ' 直接上屏，不作为码元和临时英文前缀。
+  speller/alphabet: "[;zyxwvutsrqponmlkjihgfedcba]"
+  engine/segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  engine/translators:
+    - punct_translator
+    - lua_translator@symbol_hint_translator  # 反斜杠符号提示
+    - reverse_lookup_translator
+    - table_translator
+    - history_translator@historyDM
+    - history_translator@historyDM3
+    - history_translator@historySJ
+    - lua_translator@number_translator
+    - lua_translator@calculator_translator
+    - lua_translator@shijian2_translator
+  #recognizer/patterns/easy_english: ""  # 关闭 ' 临时英文识别
+
+  # 想恢复临时英文，可改回下面几项：
+  # speller/alphabet: "[;'zyxwvutsrqponmlkjihgfedcba]"
+  # engine/segmentors:
+  #   - ascii_segmentor
+  #   - matcher
+  #   - affix_segmentor@easy_english
+  #   - abc_segmentor
+  #   - punct_segmentor
+  #   - fallback_segmentor
+  # engine/translators:
+  #   - punct_translator
+  #   - lua_translator@symbol_hint_translator
+  #   - reverse_lookup_translator
+  #   - table_translator
+  #   - table_translator@easy_english
+  #   - history_translator@historyDM
+  #   - history_translator@historyDM2
+  #   - history_translator@historyDM3
+  #   - history_translator@historySJ
+  #   - lua_translator@number_translator
+  #   - lua_translator@calculator_translator
+  #   - lua_translator@shijian2_translator
+  # recognizer/patterns/easy_english: "^'[A-Z|a-z]*`?$"
+
+
+  # 十二、滤镜配置
+  # --------------
+  simplification/opencc_config: s2t.json  # 简转繁
+  simplification/tips: all
+  pinyin/tips: all
+  pinyin/comment_format:
+    - "xform/^/ /"
+    # - "xform/（//"  # 去掉拼音提示左括号
+    # - "xform/）//"  # 去掉拼音提示右括号
+  emoji_cn/tips: all
+  charset_comment_filter/tips: all
+
+
+  # 十三、鼠须管/小狼毫通用外观
+  # ---------------------------
+  style/horizontal: false  # false 竖排，true 横排
+  style/inline_preedit: true  # 内嵌编码
+  style/preedit_type: input  # input 编码；preview 首选预览；preview_all 全部预览
+  style/vertical_auto_reverse: false  # 竖排候选框超长时不自动倒序
+  style/font_face: "Consolas, Segoe UI Emoji, Microsoft YaHei"  # 候选字体
+  style/font_point: 15  # 候选字号
+  style/comment_font_point: 15  # 注释字号
+  style/label_font_point: 15  # 编号字号
+  style/layout/border_width: 0
+  style/layout/border_height: 0
+  style/layout/corner_radius: 5
+  style/layout/round_corner: 5
+  style/layout/candidate_spacing: 8
+  style/layout/hilite_spacing: 5
+  style/layout/min_width: 95
+  style/layout/max_width: 1200
+
+
+  # 十四、配色方案
+  # --------------
+  # 小狼毫常用 style/color_scheme；鼠须管也可在 style 里写 color_scheme。
+  style/color_scheme: tiger_light
+  preset_color_schemes/tiger_light:
+    name: "虎码浅色示例"
+    author: "Rime Tiger"
+    back_color: 0xFFFFFF  # 背景色
+    border_color: 0xE6E6E6  # 边框色
+    text_color: 0x333333  # 输入码颜色
+    label_color: 0x999999  # 编号颜色
+    candidate_text_color: 0x222222  # 候选文字
+    comment_text_color: 0x888888  # 注释文字
+    hilited_back_color: 0xEDEDED  # 高亮背景
+    hilited_text_color: 0x111111
+    hilited_candidate_text_color: 0x000000
+    hilited_candidate_label_color: 0x000000
+    hilited_comment_text_color: 0x666666
+
+
+  # 十五、鼠须管专用外观写法示例
+  # ----------------------------
+  # 这段适合 squirrel.custom.yaml。
+  # style:
+  #   color_scheme: tiger_light
+  #   color_scheme_dark: tiger_dark
+  #   font_face: "PingFang SC"
+  #   font_point: 16
+  #   comment_font_point: 15
+  #   label_font_point: 15
+  #   inline_preedit: true
+  #   layout:
+  #     min_width: 85
+  #   corner_radius: 5
+  #   hilited_corner_radius: 5
+  #   line_spacing: 8
+  #   hilite_spacing: 6
+  #   spacing: 12
+
+
+  # 十六、小狼毫专用外观写法示例
+  # ----------------------------
+  # 这段适合 weasel.custom.yaml。
+  # style:
+  #   color_font: true
+  #   display_tray_icon: false
+  #   fullscreen: false
+  #   label_format: "%s."
+  #   mark_text: ""
+  #   layout:
+  #     align_type: center
+  #     border_width: 0
+  #     border_height: 0
+  #     corner_radius: 5
+  #     round_corner: 5
+  #     shadow_offset_x: 4
+  #     shadow_offset_y: 4
+  #     shadow_radius: 5
+
+
+  # 十七、列表替换提醒
+  # ------------------
+  # 这些路径都是列表，patch 时通常会整组替换：
+  #   schema_list
+  #   switches
+  #   engine/processors
+  #   engine/segmentors
+  #   engine/translators
+  #   engine/filters
+  #   key_binder/bindings
+  #
+  # 只改其中一项时，要么写完整列表，要么使用 Rime 的 @ 下标 patch 语法。
+  # 例：switches/@0/reset: 1
+
+
+  # 十八、patch 路径语法示例
+  # ------------------------
+  # 普通覆盖：
+  #   menu/page_size: 5
+  #
+  # 修改列表第 1 项：
+  #   switches/@0/reset: 1
+  #
+  # 修改列表最后一项：
+  #   engine/filters/@last: uniquifier
+  #
+  # 追加到列表末尾，值必须是列表：
+  #   engine/filters/+:
+  #     - simplifier@emoji_cn
+  #
+  # 合并到 map，值必须是 map：
+  #   recognizer/patterns/+:
+  #     custom_url: "^https?://.*$"
+  #
+  # 整体替换 map：
+  #   punctuator/half_shape/=:
+  #     ",": { commit: ， }
+  #     ".": { commit: 。 }
+
+
+  # 十九、在特定程序里默认英文
+  # --------------------------
+  # 这类配置适合放在 squirrel.custom.yaml 或 weasel.custom.yaml。
+  # macOS 鼠须管用 Bundle Identifier：
+  # app_options/com.apple.Terminal:
+  #   ascii_mode: true  # 终端默认英文
+  #   no_inline: true  # 不使用行内编辑
+  # app_options/com.microsoft.VSCode:
+  #   ascii_mode: true
+  # app_options/org.vim.MacVim:
+  #   ascii_mode: true
+  #   no_inline: true
+  #   vim_mode: true
+  #
+  # Windows 小狼毫用进程名，通常小写：
+  # app_options/gvim.exe:
+  #   ascii_mode: true
+  # app_options/code.exe:
+  #   ascii_mode: true
+
+
+  # 二十、selector 候选选择
+  # ----------------------
+  selector/bindings:
+    ISO_Left_Tab: previous_candidate
+    Shift+Tab: previous_candidate
+    Tab: next_candidate
+
+
+  # 二十一、自定义短语
+  # ------------------
+  # 使用时需要在 schema 的 engine/translators 里加入 table_translator@custom_phrase。
+  custom_phrase/dictionary: ""
+  custom_phrase/user_dict: custom_phrase
+  custom_phrase/db_class: stabledb
+  custom_phrase/enable_completion: false
+  custom_phrase/enable_sentence: false
+  custom_phrase/initial_quality: 1
+
+
+  # 二十二、反查细调
+  # ----------------
+  reverse_lookup/dictionary: PY_c
+  # reverse_lookup/prism: double_pinyin  # 用双拼棱镜反查时才需要
+  reverse_lookup/tips: "〔拼音〕"
+  reverse_lookup/preedit_format:
+    - "xform/([nl])v/$1ü/"
+    - "xform/([nl])ue/$1üe/"
+    - "xform/([jqxy])v/$1u/"
+  reverse_lookup/comment_format:
+    - "xform/^/ /"
+
+
+  # 二十三、编码变换 / algebra
+  # --------------------------
+  # 拼音、双拼、模糊音常用；虎码一般不建议随便改。
+  # speller/algebra:
+  #   - derive/^([zcs])h/$1/  # zh/ch/sh -> z/c/s
+  #   - derive/^([nl])ue$/$1ve/
+  #
+  # 也可以从外部配置片段引入：
+  # speller/algebra:
+  #   __patch:
+  #     - pinyin:/abbreviation
+  #     - pinyin:/spelling_correction
+  #     - pinyin:/key_correction
+
+
+  # 二十四、禁用或增加输入模式
+  # --------------------------
+  # 关闭拼音反查：
+  # recognizer/patterns/reverse_lookup: ""
+  #
+  # 添加自定义西文识别：
+  # recognizer/patterns/email: "^[A-Za-z][-_.0-9A-Za-z]*@.*$"
+  # recognizer/patterns/url: "^(www[.]|https?:|ftp[.:]|mailto:|file:).*$|^[a-z]+[.].+$"
+  #
+  # 让某个前缀进入自定义符号：
+  # recognizer/patterns/custom_symbol: "^zz[a-z]*$"
+
+
+  # 二十五、更多按键条件
+  # --------------------
+  # when 常见值：
+  #   always     总是生效
+  #   composing  正在输入编码
+  #   has_menu   有候选菜单
+  #   paging     正在翻页
+  #
+  # accept 是按下的键，send 是发送给 Rime 的键。
+  # toggle 切换开关，select 切换方案。
+  #
+  # key_binder/bindings:
+  #   - { when: composing, accept: Return, send: Escape }  # 回车清屏
+  #   - { when: paging, accept: bracketleft, send: Page_Up }  # [ 上一页
+  #   - { when: has_menu, accept: bracketright, send: Page_Down }  # ] 下一页
+  #   - { when: always, accept: Control+Shift+1, select: .next }  # 下一个方案
+
+
+  # 二十六、OpenCC 文件
+  # -------------------
+  # simplifier/opencc_config 可以指向 opencc 目录下的 json 配置。
+  # 本仓库有 opencc/*.txt 字典，具体 json 配置取决于前端和 OpenCC 配置文件。
+  # 常见值示例：
+  #   s2t.json     简转繁
+  #   t2s.json     繁转简
+  #   s2tw.json    简转台湾正体
+  #   s2hk.json    简转香港繁体
+  #
+  # simplification/opencc_config: s2t.json
+
+
+  # 二十七、build 目录
+  # ------------------
+  # build/ 是 Rime 部署后生成的缓存结果，不要手工改。
+  # 想看 custom 是否生效，可以看 build/<schema_id>.schema.yaml 里的合并结果。
+
+
+  # 二十八、前端配置文件的顶层字段
+  # ------------------------------
+  # default.yaml / squirrel.yaml / weasel.yaml 里还会看到一些顶层字段。
+  # 在 custom 里要通过 patch 路径覆盖：
+  #
+  # config_version: "1.0"  # 配置版本，通常不用在 custom 里改
+  # keyboard_layout: last  # 鼠须管：键盘布局，last/default/_custom_
+  # chord_duration: 0.1  # 鼠须管：并击按键判定时间
+  # show_notifications_when: appropriate  # 鼠须管：通知显示策略
+  #
+  # 对应 custom 写法：
+  # keyboard_layout: last
+  # chord_duration: 0.1
+  # show_notifications_when: appropriate
+
+
+  # 二十九、鼠须管新版外观字段
+  # --------------------------
+  # 新版鼠须管推荐 candidate_list_layout / text_orientation，
+  # 老字段 horizontal 在新版本里逐渐废弃。
+  # style/candidate_list_layout: stacked  # stacked 竖排；linear 横排
+  # style/text_orientation: horizontal  # horizontal 横排文字；vertical 竖排文字
+  # style/inline_candidate: false  # 是否把首选嵌入输入框
+  # style/memorize_size: true  # 记住候选窗大小
+  # style/mutual_exclusive: false  # 透明色是否互斥
+  # style/translucency: false  # 透明背景
+  # style/show_paging: false  # 显示翻页箭头
+  # style/candidate_format: "[label]. [candidate] [comment]"  # 候选格式
+  # style/base_offset: 0  # 字体基线偏移
+
+
+  # 三十、配色颜色字段补充
+  # ----------------------
+  # 常见颜色字段，具体前端支持程度略有差异：
+  # preset_color_schemes/tiger_light/preedit_back_color: 0xFFFFFF
+  # preset_color_schemes/tiger_light/candidate_back_color: 0xFFFFFF
+  # preset_color_schemes/tiger_light/hilited_candidate_back_color: 0xEDEDED
+  # preset_color_schemes/tiger_light/hilited_label_color: 0x000000
+  # preset_color_schemes/tiger_light/shadow_color: 0x20000000
+  # preset_color_schemes/tiger_light/color_space: display_p3  # macOS 可用
