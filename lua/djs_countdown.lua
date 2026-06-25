@@ -68,9 +68,11 @@ if not shared then
     selected_event_id = nil,
     notice = nil,
     loaded_data = nil,
+    ensured_dirs = {},
   }
   rawset(_G, "__djs_countdown_shared", shared)
 end
+shared.ensured_dirs = shared.ensured_dirs or {}
 
 local get_context
 
@@ -92,12 +94,16 @@ end
 
 local function ensure_parent(path)
   local dir = parent_dir(path)
+  if shared.ensured_dirs[dir] then
+    return
+  end
   local sep = pathsep()
   if sep == "\\" then
     os.execute('mkdir "' .. dir .. '" >nul 2>nul')
   else
     os.execute("mkdir -p " .. string.format("%q", dir))
   end
+  shared.ensured_dirs[dir] = true
 end
 
 local function now()
@@ -1269,7 +1275,7 @@ local function handle_capture_return(ctx)
   return false
 end
 
-local function handle_backspace(ctx)
+local function handle_backspace(ctx, persist)
   if not shared.draft then
     return false
   end
@@ -1286,7 +1292,9 @@ local function handle_backspace(ctx)
   else
     return false
   end
-  persist_state()
+  if persist ~= false then
+    persist_state()
+  end
   if shared.mode == MODE.CAPTURE_NAME and shared.draft.name_query and shared.draft.name_query ~= "" then
     clear_and_set(ctx, shared.draft.name_query)
   elseif shared.mode == MODE.CAPTURE_NAME then
@@ -1348,18 +1356,16 @@ function processor.func(key_event, env)
       M.clear_state()
       clear_and_set(ctx, "\\djs")
       return kAccepted
-    elseif keycode == KEY.BACKSPACE and handle_backspace(ctx) then
+    elseif keycode == KEY.BACKSPACE and handle_backspace(ctx, false) then
       return kAccepted
     elseif name_query_active and (keycode == KEY.SPACE or keycode == KEY.RETURN or keycode == KEY.SEMICOLON or keycode == KEY.APOSTROPHE or (keycode >= 0x31 and keycode <= 0x39)) then
       return handle_capture_selection(env, keycode) and kAccepted or kNoop
     elseif keycode == KEY.RETURN and handle_capture_return(ctx) then
       return kAccepted
     elseif shared.mode == MODE.CAPTURE_NAME and append_capture_letter(keycode) then
-      persist_state()
       clear_and_set(ctx, shared.draft.name_query)
       return kAccepted
     elseif shared.mode == MODE.CAPTURE_DATE and append_capture_letter(keycode) then
-      persist_state()
       clear_and_set(ctx, "\\djsm")
       return kAccepted
     elseif keycode == KEY.SPACE or keycode == KEY.RETURN or keycode == KEY.SEMICOLON or keycode == KEY.APOSTROPHE or (keycode >= 0x31 and keycode <= 0x39) then
@@ -1452,6 +1458,7 @@ function M._test_reset(options)
   shared.selected_event_id = nil
   shared.notice = nil
   shared.loaded_data = nil
+  shared.ensured_dirs = {}
 end
 
 return M
