@@ -80,23 +80,4 @@ patch:
 
   # 让 ' 直接上屏成 ‘’（放弃 ' 的单字重复，临时英文反查也一起没了 —— 不用）
   # 关键是 affix_segmentor@easy_english 会把 ' 注册成前缀键强制进组合，光改 alphabet 没用，必须整段替换 segmentors
-  speller/alphabet: "[;zyxwvutsrqponmlkjihgfedcba]"
-  engine/segmentors:
-    - ascii_segmentor
-    - matcher
-    - abc_segmentor
-    - punct_segmentor
-    - fallback_segmentor
-  engine/translators:
-    - punct_translator
-    - lua_translator@symbol_hint_translator #反斜杠符号提示
-    - lua_translator@*input_speed_stat*translator #测速统计
-    - reverse_lookup_translator
-    - table_translator
-    - history_translator@historyDM
-    - history_translator@historyDM3
-    - history_translator@historySJ
-    - lua_translator@number_translator
-    - lua_translator@calculator_translator
-    - lua_translator@shijian2_translator
-  recognizer/patterns/easy_english: ""
+  speller/alphabet: "';zyxwvutsrqponmlkjihgfedcba"

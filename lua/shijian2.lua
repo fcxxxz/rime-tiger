@@ -1840,7 +1840,9 @@ local function command_matches(input, ...)
 end
 
 local function translator(input, seg)
-  if command_matches(input, "date", "frq", "orzh") then
+  if input == "\\djsm" then
+    require("djs_countdown").translator(input, seg)
+  elseif command_matches(input, "date", "frq", "orzh") then
     date = os.date("%Y.%m.%d")
     num_year = os.date("%j/") .. IsLeap(os.date("%Y"))
     candidate = Candidate("date", seg.start, seg._end, date, num_year)
@@ -1952,26 +1954,7 @@ local function translator(input, seg)
       end
     end -- if tonumber
   elseif command_matches(input, "djs") then
-    -- 公历倒计时
-    sth_y = "1998" -- 公历生日——年
-    sth_m = "08" -- 公历生日——月
-    sth_d = "14" -- 公历生日——日
-    --[[    --农历倒计时
-    bb_y="1997" --农历生日——年
-    bb_m="03"  --农历生日——月
-    bb_d="16"   --农历生日——日
-]]
-    --    sxjsr="距离下次生日还有"..nl_shengri2(sth_y,sth_m,sth_d).."天"
-    sxjsr = "距离下次生日还有" .. diffDate2(os.date("%Y%m%d"), sth_y .. sth_m .. sth_d) .. "天"
-    candidate = Candidate("/djs", seg.start, seg._end, sxjsr, "")
-    yield(candidate)
-    -- 公历倒计时
-    sth_y = "2021" -- 公历日期——年
-    sth_m = "03" -- 公历日期——月
-    sth_d = "14" -- 公历日期——日
-    djs = "距离下次情人节还有" .. diffDate2(os.date("%Y%m%d"), sth_y .. sth_m .. sth_d) .. "天"
-    candidate = Candidate("/djs", seg.start, seg._end, djs, "")
-    yield(candidate)
+    require("djs_countdown").translator(input, seg)
   end -- if
 end -- function
 

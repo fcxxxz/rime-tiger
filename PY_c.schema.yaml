@@ -17,10 +17,8 @@ switches: # 0 默认关，1 默认开
   #   reset: 1
   #   states: [ 全字集 , 常用字 ]
   - name: pinyin  #拼音滤镜
-    reset: 0
     states: [ "拼隐", "拼显 Ctrl+P Ctrl+Shift+Enter上屏拼音" ]
   - name: emoji_cn  #emoji滤镜
-    reset: 0
     states: [ 🈚表情, "🈶表情 Ctrl+I" ]
   # - name: chaifen
   #   reset: 0 
@@ -33,16 +31,14 @@ switches: # 0 默认关，1 默认开
   #     - GB2312
   #     - BIG5
   - name: simplification  #简转繁滤镜
-    reset: 0
     states: [ 简中, "繁中 Ctrl+O" ]
+  - name: mars #火星文滤镜
+    states: [ '火星文 关 \chol', '火星文 开 \chol' ]
   - name: charset_comment_filter  #字符集提示
-    reset: 0  
     states: [ U区关, "U区开 Ctrl+U" ]
   - name: udpf_switch
-    reset: 0
     states: [ U编关, "U编开 Ctrl+Y" ]
   - name: ascii_punct
-    reset: 0
     states: [ 。，, "．， Ctrl+." ]
   # - options: [_keyboard_default, _keyboard_defaultzj]
   #   reset: 0
@@ -51,7 +47,6 @@ switches: # 0 默认关，1 默认开
   #   reset: 0
   #   states: [ 反繁, 反简 ]
   - name: full_shape
-    reset: 0
     states: [ 半角, "全角 Shift+Space" ]
 
 engine:
@@ -59,6 +54,9 @@ engine:
   # 1.2版本加入的- fluid_editor # 将字符按键记入输入上下文，将输入法连缀成一串
     - ascii_composer # 处理英文模式及中英文切换
     - recognizer # 与 matcher 搭配，处理符合特定规则的输入码，如网址、反查等
+    - lua_processor@*option_sync #跨窗口同步功能开关
+    - lua_processor@*djs_countdown*processor #倒计时管理
+    - lua_processor@*mars*processor #火星文命令开关
     - key_binder # 在特定条件下将按键绑定到其他按键，如重定义逗号、句号为候选翻页键
     - speller # 把字母追加到编码串
     - punctuator # 处理符号按键
@@ -76,14 +74,13 @@ engine:
   translators:
     # - echo_translator # 没有其他结果时，创建一个与编码串一样的候选项
     - punct_translator # 转换标点符号
+    - lua_translator@*mars*translator #火星文命令
     - script_translator # 脚本表转换
     # - table_translator@custom_phrase
     - table_translator
     - table_translator@easy_english #临时英文
     - reverse_lookup_translator # 反查翻译器
-    - history_translator@historyDM # 历史上屏 电脑
     - history_translator@historyDM2 # 历史上屏 电脑2
-    - history_translator@historyDM3 # 历史上屏 电脑3
     - history_translator@historySJ # 历史上屏 手机  
     - lua_translator@number_translator # 数字转大写
     - lua_translator@calculator_translator # 简易计算器
@@ -99,12 +96,14 @@ engine:
     # - simplifier@fanjian  #繁简滤镜
     - simplifier@pinyin  #拼音滤镜
     - simplifier@emoji_cn  #表情滤镜
+    - lua_filter@*djs_countdown*filter #倒计时管理状态
+    - lua_filter@*mars #火星文滤镜
     - lua_filter@charset_comment_filter #Unicode分区提示滤镜
     - lua_filter@lua_unicode_display_filter #Unicode编码显示
     - uniquifier  # 过滤重复的候选字，可能来自简繁转换
 
 speller:
-  alphabet: "['zyxwvutsrqponmlkjihgfedcba]" # 输入范围 码元
+  alphabet: "'zyxwvutsrqponmlkjihgfedcba" # 输入范围 码元
   delimiter: " '" 
   # auto_select: true
   # auto_select_pattern: ^;\w+ #自动上屏规则 对 [;] 开头的编码实行候选唯一自动上屏
@@ -202,26 +201,26 @@ key_binder:
 recognizer:
   import_preset: default
   patterns:
-    punct: "^/([0-9]0?|[A-Za-z]+)$"
+    punct: '^\\([0-9]0?|[A-Za-z]*)$'
     easy_english: "^'[A-Z|a-z]*`?$"
     expression: "^=.*$"
     reverse_lookup: "`[a-z]*'?$"
 
 
-historyDM:
-  input: "["
-  size: 1
-  initial_quality: 999
+#historyDM:
+#  input: "["
+#  size: 1
+#  initial_quality: 999
 
 historyDM2:
   input: "'"
   size: 1
   initial_quality: -999
 
-historyDM3:
-  input: "]"
-  size: 1
-  initial_quality: 999
+#historyDM3:
+#  input: "]"
+#  size: 1
+#  initial_quality: 999
 
 # 笔画反查
 reverse_lookup:
@@ -289,7 +288,7 @@ easy_english:
     - "xform/~/ /"
 
 menu:
-  page_size: 5 #候选数量
+  page_size: 9 #候选数量，\djs 管理入口固定第9位
   # alternative_select_labels: [ ㊀, ㊁, ㊂, ㊃, ㊄, ㊅, ㊆, ㊇, ㊈ ]  #自定义候选序号显示符
   # 以下是备选样式（自行删除#号生效，只能生效一种）
   # menu/alternative_select_labels: [ 1,2,3,4,5,6,7,8,9,0 ]

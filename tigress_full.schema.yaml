@@ -29,7 +29,10 @@ engine:
   processors:
     - ascii_composer
     - recognizer
+    - lua_processor@*option_sync #跨窗口同步功能开关
     - lua_processor@*input_speed_stat*processor #测速统计开关
+    - lua_processor@*djs_countdown*processor #倒计时管理
+    - lua_processor@*mars*processor #火星文命令开关
     - lua_processor@*space_proc3 #标顶空码不上屏
     - lua_processor@*symbol_proc #候选唯一时符号顶字
     - lua_processor@*tigress_user_words*processor #用户加词、减词、调序
@@ -52,6 +55,8 @@ engine:
     - simplifier@pinyin  #拼音滤镜
     - simplifier@chaifen #拆分滤镜
     - simplifier@emoji_cn  #表情滤镜
+    - lua_filter@*djs_countdown*filter #倒计时管理状态
+    - lua_filter@*mars #火星文滤镜
     - lua_filter@charset_comment_filter #Unicode分区提示滤镜
     - lua_filter@lua_unicode_display_filter #Unicode编码显示
     - uniquifier #过滤重复

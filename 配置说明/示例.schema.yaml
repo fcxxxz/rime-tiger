@@ -53,28 +53,22 @@ switches:
     reset: 0
     states: [ 中文, "西文 Shift/Caps" ]  # 中英文状态
   - name: pinyin
-    reset: 0
     states: [ "拼隐", "拼显 Ctrl+P Ctrl+Shift+Enter上屏拼音" ]  # 拼音滤镜
   - name: emoji_cn
-    reset: 0
     states: [ 🈚表情, "🈶表情 Ctrl+I" ]  # emoji 表情关/开
   - name: chaifen
-    reset: 0
     states: [ "拆隐", "拆显 Ctrl+J Ctrl+Shift+Enter上屏拆分" ]  # 拆分提示
   - name: simplification
-    reset: 0
     states: [ 简中, "繁中 Ctrl+O" ]  # 简繁切换
+  - name: mars
+    states: [ '火星文 关 \chol', '火星文 开 \chol' ]  # 火星文滤镜
   - name: charset_comment_filter
-    reset: 0
     states: [ U区关, "U区开 Ctrl+U" ]  # Unicode 分区提示
   - name: udpf_switch
-    reset: 0
     states: [ U编关, "U编开 Ctrl+Y" ]  # Unicode 编码提示
   - name: ascii_punct
-    reset: 0
     states: [ 。，, "．， Ctrl+." ]  # 中英标点
   - name: full_shape
-    reset: 0
     states: [ 半角, "全角 Shift+Space" ]  # 全半角
 
 
@@ -86,6 +80,8 @@ engine:
   processors:
     - ascii_composer  # 处理中英文状态
     - recognizer  # 识别反查、符号、表达式等输入模式
+    - lua_processor@*option_sync  # 跨窗口同步功能开关
+    - lua_processor@*mars*processor  # 火星文命令开关
     - lua_processor@*space_proc3  # 空码处理
     - lua_processor@*symbol_proc  # 候选唯一时符号顶字
     # - lua_processor@*tigress_user_words*processor  # 词库版加词、删词、调序；单字版不要加
@@ -106,6 +102,7 @@ engine:
   translators:
     - punct_translator  # 标点翻译
     - lua_translator@symbol_hint_translator  # 反斜杠符号提示
+    - lua_translator@*mars*translator  # 火星文命令
     - reverse_lookup_translator  # 拼音反查
     - table_translator  # 主码表翻译器
     - table_translator@easy_english  # 临时英文
@@ -125,6 +122,7 @@ engine:
     - simplifier@pinyin  # 拼音滤镜
     - simplifier@chaifen  # 拆分滤镜
     - simplifier@emoji_cn  # emoji 滤镜
+    - lua_filter@*mars  # 火星文滤镜
     - lua_filter@charset_comment_filter  # Unicode 分区提示
     - lua_filter@lua_unicode_display_filter  # Unicode 编码显示
     - uniquifier  # 去重

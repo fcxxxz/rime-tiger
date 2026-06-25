@@ -2,6 +2,7 @@
 -- Commands use the existing backslash namespace: \tj, \tjs, \tjj, \tjx.
 
 local M = {}
+local option_state = require("option_state")
 
 local OPTION_NAME = "input_speed_stat"
 local SESSION_TIMEOUT_MS = 3000
@@ -62,6 +63,7 @@ local function reset_state()
     env = nil,
     notifier = nil,
     update_notifier = nil,
+    option_notifier = nil,
     dirty = false,
     last_activity_ms = 0,
     last_save_ms = 0,
@@ -117,12 +119,12 @@ local function get_context(env)
   return nil
 end
 
-local function enabled(env)
+local function enabled(env, force_sync)
   local ctx = get_context(env)
   if not ctx or not ctx.get_option then
-    return false
+    return option_state.get(OPTION_NAME, false, force_sync)
   end
-  return ctx:get_option(OPTION_NAME) and true or false
+  return option_state.sync(env, OPTION_NAME, ctx:get_option(OPTION_NAME) and true or false, force_sync)
 end
 
 local function serialize(tbl, indent)
@@ -562,7 +564,7 @@ function translator.func(input, seg, env)
       yield_menu(seg)
       return
     end
-    if enabled(env) then
+    if enabled(env, true) then
       yield_candidate(seg, "测速统计：开", "确认切换为测速关", 1200)
     else
       yield_candidate(seg, "测速统计：关", "确认切换为测速开", 1200)
@@ -580,7 +582,7 @@ function translator.func(input, seg, env)
     return
   end
 
-  if not enabled(env) then
+  if not enabled(env, true) then
     handle_disabled()
     yield_candidate(seg, "测速统计未开启", "请在方案菜单切到“测速开”", 1200)
     return
@@ -657,7 +659,10 @@ function processor.func(key_event, env)
     return kAccepted
   end
 
-  local next_enabled = not enabled(env)
+  local next_enabled = not enabled(env, true)
+  if option_state.can_sync(env) then
+    option_state.set(OPTION_NAME, next_enabled)
+  end
   if ctx.set_option then
     ctx:set_option(OPTION_NAME, next_enabled)
   end
@@ -726,6 +731,12 @@ function translator.init(env)
   if ctx and ctx.update_notifier and ctx.update_notifier.connect then
     state.update_notifier = ctx.update_notifier:connect(update_callback)
   end
+  if ctx and ctx.option_update_notifier and ctx.option_update_notifier.connect then
+    state.option_notifier = ctx.option_update_notifier:connect(function()
+      option_state.set(OPTION_NAME, ctx:get_option(OPTION_NAME) and true or false)
+    end)
+  end
+  enabled(env, true)
 end
 
 function translator.fini()
@@ -738,8 +749,12 @@ function translator.fini()
   if state.update_notifier and state.update_notifier.disconnect then
     state.update_notifier:disconnect()
   end
+  if state.option_notifier and state.option_notifier.disconnect then
+    state.option_notifier:disconnect()
+  end
   state.notifier = nil
   state.update_notifier = nil
+  state.option_notifier = nil
   M.save(false)
 end
 

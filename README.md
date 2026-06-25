@@ -35,6 +35,7 @@
 - `\bq`：表情
 - `\pi`：π
 - `\sz`：色子
+- `\chol`：切换火星文
 
 输入 `\`、`\b`、`\p` 等前缀时，候选框会提示可用符号命令。
 
@@ -65,6 +66,14 @@
 
 用户加词和调序会写入 `tigress.user.dict.yaml` 的自动生成区。减词会在匹配到的词库条目前写入禁用标记并注释原条目，同时也会在用户词库记录操作历史。
 
+## 倒计时
+
+输入 `\djs` 显示倒计时，第 9 位固定为“管理倒计时”。进入管理后可新增、编辑、删除和恢复默认倒计时。
+
+新增事件名时，选“新增倒计时”后会清空输入；直接正常打编码，输入期间会显示当前事件名状态，选候选后追加到事件名并清空输入，可继续打下一段，事件名填好后按 `Enter` 进入历法选择。日期输入使用 `YYYYMMDD`，可选公历或农历。
+
+倒计时排序使用 `Command+上/左`、`Command+下/右` 调整当前高亮倒计时的位置；虎词词序排序仍使用 `Ctrl+方向` 或 `Ctrl+Option+方向`。
+
 ## 拼音与拆分提示
 
 拼音滤镜已去掉注释里的全角圆括号。候选框显示拼音或拆分时，可以用：
@@ -72,6 +81,17 @@
 - `Ctrl+Shift+Enter`：上屏候选注释中的拼音或拆分内容。
 
 用户设置菜单里的拼音、拆分开关后面也会提示这个快捷键。
+
+## 火星文滤镜
+
+`tiger`、`tiger_full`、`tigress`、`tigress_full`、`PY_c` 都接入了火星文滤镜：
+
+- 在方案选单/选项菜单里切换 `火星文 关 \chol` / `火星文 开 \chol`。
+- 输入 `\chol` 并确认候选，也可以切换火星文开关。
+- 火星文、测速统计、拼音提示、拆分提示等功能开关已加入 `switcher/save_options`，并由 `lua/option_sync.lua` / `lua/option_state.lua` 做跨窗口即时同步。
+- 火星文数据来自 `zhanyuzhang/text-convert` 的 `convert.js`，保存在 `lua/mars_data.lua`。
+- `lua/mars.lua` 只常驻轻量滤镜壳；`mars_data.lua` 会在火星文开关开启后首次处理候选时加载，关闭后释放映射表引用并触发一次 Lua GC。
+- 移植到其他 Rime 配置时，复制 `lua/mars.lua`、`lua/mars_data.lua`、`lua/option_state.lua`；需要跨窗口同步普通开关时再复制 `lua/option_sync.lua` 并加 `lua_processor@*option_sync`。目标方案里还要加 `mars` 开关、`lua_processor@*mars*processor`、`lua_translator@*mars*translator` 和 `lua_filter@*mars`；不需要改 `rime.lua` 预加载。
 
 ## 鼠须管皮肤
 

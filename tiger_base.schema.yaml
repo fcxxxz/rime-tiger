@@ -42,44 +42,40 @@ switches: # 0 默认关，1 默认开
     reset: 0
     states: [ 中文, "西文 Shift/Caps" ]  #中英文状态
   - name: pinyin  #拼音滤镜
-    reset: 0
     states: [ "拼隐", "拼显 Ctrl+P Ctrl+Shift+Enter上屏拼音" ]
   - name: emoji_cn  #emoji滤镜
-    reset: 0
     states: [ 🈚表情, "🈶表情 Ctrl+I" ]
   - name: input_speed_stat #测速统计
-    reset: 0
     states: [ 测速关, 测速开 ]
   - name: chaifen
-    reset: 0
     states: [ "拆隐", "拆显 Ctrl+J Ctrl+Shift+Enter上屏拆分" ]
   # - options: [ gb2312, gbk, utf8 ]
   #   states: [ gb2312, GBK, UTF-8 ]
   #   reset: 0
   - name: simplification  #简转繁滤镜
-    reset: 0
     states: [ 简中, "繁中 Ctrl+O" ]
+  - name: mars #火星文滤镜
+    states: [ '火星文 关 \chol', '火星文 开 \chol' ]
   - name: charset_comment_filter  #字符集提示
-    reset: 0
     states: [ U区关, "U区开 Ctrl+U" ]
   - name: udpf_switch
-    reset: 0
     states: [ U编关, "U编开 Ctrl+Y" ]
   - name: ascii_punct
-    reset: 0
     states: [ 。，, "．， Ctrl+." ]
   # - name: fanjian  #繁转简滤镜
   #   reset: 0
   #   states: [ 反繁, 反简 ]
   - name: full_shape
-    reset: 0
     states: [ 半角, "全角 Shift+Space" ]
 
 engine:
   processors:
     - ascii_composer
     - recognizer
+    - lua_processor@*option_sync #跨窗口同步功能开关
     - lua_processor@*input_speed_stat*processor #测速统计开关
+    - lua_processor@*djs_countdown*processor #倒计时管理
+    - lua_processor@*mars*processor #火星文命令开关
     - lua_processor@*space_proc3 #标顶空码不上屏
     - lua_processor@*symbol_proc #候选唯一时符号顶字
     - key_binder
@@ -99,13 +95,12 @@ engine:
   translators:
     - punct_translator
     - lua_translator@symbol_hint_translator #反斜杠符号提示
+    - lua_translator@*mars*translator #火星文命令
     - lua_translator@*input_speed_stat*translator #测速统计
     - reverse_lookup_translator #拼音反查
     - table_translator
     - table_translator@easy_english #临时英文
-    - history_translator@historyDM # 重复上屏 电脑
     - history_translator@historyDM2 # 重复上屏 电脑2
-    - history_translator@historyDM3 # 重复上屏 电脑3
     - history_translator@historySJ # 重复上屏 手机
     - lua_translator@number_translator # 数字转大写
     - lua_translator@calculator_translator # 简易计算器
@@ -122,6 +117,8 @@ engine:
     - simplifier@pinyin #拼音滤镜
     - simplifier@chaifen #拆分滤镜
     - simplifier@emoji_cn #表情滤镜
+    - lua_filter@*djs_countdown*filter #倒计时管理状态
+    - lua_filter@*mars #火星文滤镜
     - lua_filter@charset_comment_filter #Unicode分区提示滤镜
     - lua_filter@lua_unicode_display_filter #Unicode编码显示
     - uniquifier #过滤重复
@@ -130,7 +127,7 @@ speller:
   auto_clear: max_length # 3种选择， manual|auto|max_length 空码按下一键确认清屏|空码自动清|达到最长码时后码顶上清屏
   auto_select: true
   max_code_length: 4
-  alphabet: "[;'zyxwvutsrqponmlkjihgfedcba]"
+  alphabet: ";'zyxwvutsrqponmlkjihgfedcba"
   # initials: "abcdefghijklmnopqrstuvwxyz;'"
   auto_select_pattern: ^;\w+ #自动上屏规则  对 [;] 引导的编码实行候选唯一自动上屏
   # 若要添加四码上屏功能，在  ^;\w+ 后面 加上  |^\w{4}$  即可
@@ -212,10 +209,10 @@ historySJ:
   size: 1
   initial_quality: 0
 
-historyDM:
-  input: "["
-  size: 1
-  initial_quality: 999
+#historyDM:
+#  input: "["
+#  size: 1
+#  initial_quality: 999
 
 
 historyDM2:
@@ -223,10 +220,10 @@ historyDM2:
   size: 1
   initial_quality: -999
 
-historyDM3:
-  input: "]"
-  size: 1
-  initial_quality: 999
+#historyDM3:
+#  input: "]"
+#  size: 1
+#  initial_quality: 999
 
 # ↓简繁(+部分异体)滤镜
 simplification:  #⇩四选一

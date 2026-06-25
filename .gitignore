@@ -3,7 +3,6 @@ __pycache__/
 
 # Development-only files
 tests/*
-!tests/test_tigress_import_tables.py
 docs/
 tools/
 

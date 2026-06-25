@@ -16,6 +16,17 @@ patch:
     - "Control+F8"
     # - "F4" 
     # 如果想用F4来切换，把上一行，行首的#删去
+  "switcher/save_options":
+    - ascii_punct
+    - full_shape
+    - simplification
+    - pinyin
+    - emoji_cn
+    - input_speed_stat
+    - chaifen
+    - mars
+    - charset_comment_filter
+    - udpf_switch
 #左Shift键输入字符直接切换为英文上屏，输入状态变为英文。
   ascii_composer/good_old_caps_lock: true
   ascii_composer/switch_key:

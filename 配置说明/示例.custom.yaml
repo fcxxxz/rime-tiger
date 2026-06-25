@@ -61,11 +61,16 @@ patch:
   # ----------------
   # switches 是列表，下标从 0 开始。这里按 tiger_base.schema.yaml 当前顺序举例。
   switches/@0/reset: 0  # ascii_mode：0 中文，1 西文
-  switches/@1/reset: 0  # pinyin：0 关，1 开
-  switches/@2/reset: 0  # emoji_cn：0 关，1 开
-  switches/@3/reset: 0  # input_speed_stat：0 关，1 开
-  switches/@4/reset: 0  # chaifen：0 关，1 开
-  switches/@5/reset: 0  # simplification：0 简体，1 繁体
+  # switches/@1/reset: 0  # pinyin：若要每次重置为关，再启用这一行
+  # switches/@2/reset: 0  # emoji_cn：若要每次重置为关，再启用这一行
+  # switches/@3/reset: 0  # input_speed_stat：若要每次重置为关，再启用这一行
+  # switches/@4/reset: 0  # chaifen：若要每次重置为关，再启用这一行
+  # switches/@5/reset: 0  # simplification：若要每次重置为简体，再启用这一行
+  # switches/@6/reset: 0  # mars：若要每次重置为关，再启用这一行
+  # switches/@7/reset: 0  # charset_comment_filter：若要每次重置为关，再启用这一行
+  # switches/@8/reset: 0  # udpf_switch：若要每次重置为关，再启用这一行
+  # switches/@9/reset: 0  # ascii_punct：若要每次重置为中文标点，再启用这一行
+  # switches/@10/reset: 0  # full_shape：若要每次重置为半角，再启用这一行
   # 也可以改开关显示文字，建议只在“切换后的状态”写一次快捷键。
   switches/@0/states: [ 中文, "西文 Shift/Caps" ]
   switches/@1/states: [ "拼隐", "拼显 Ctrl+P Ctrl+Shift+Enter上屏拼音" ]
@@ -73,10 +78,11 @@ patch:
   switches/@3/states: [ 测速关, 测速开 ]
   switches/@4/states: [ "拆隐", "拆显 Ctrl+J Ctrl+Shift+Enter上屏拆分" ]
   switches/@5/states: [ 简中, "繁中 Ctrl+O" ]
-  switches/@6/states: [ U区关, "U区开 Ctrl+U" ]
-  switches/@7/states: [ U编关, "U编开 Ctrl+Y" ]
-  switches/@8/states: [ 。，, "．， Ctrl+." ]
-  switches/@9/states: [ 半角, "全角 Shift+Space" ]
+  switches/@6/states: [ '火星文 关 \chol', '火星文 开 \chol' ]
+  switches/@7/states: [ U区关, "U区开 Ctrl+U" ]
+  switches/@8/states: [ U编关, "U编开 Ctrl+Y" ]
+  switches/@9/states: [ 。，, "．， Ctrl+." ]
+  switches/@10/states: [ 半角, "全角 Shift+Space" ]
 
 
   # 六、空格和常用快捷键
@@ -132,7 +138,15 @@ patch:
     - "Control+F8"  # 备用快捷键
   switcher/save_options:
     - ascii_punct  # 保存中英标点状态
+    - full_shape  # 保存全半角状态
     - simplification  # 保存简繁状态
+    - pinyin  # 保存拼音提示状态
+    - emoji_cn  # 保存 emoji 状态
+    - input_speed_stat  # 保存测速统计状态
+    - chaifen  # 保存拆分提示状态
+    - mars  # 保存火星文状态
+    - charset_comment_filter  # 保存 Unicode 分区提示状态
+    - udpf_switch  # 保存 Unicode 编码提示状态
   switcher/fold_options: true  # 折叠选项
   switcher/abbreviate_options: true  # 简写选项名
 
