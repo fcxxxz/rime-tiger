@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rime 皮肤编辑器</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div>
+          <h1>Rime 皮肤编辑器</h1>
+          <p id="supportStatus">正在检测浏览器能力...</p>
+        </div>
+        <div class="top-actions">
+          <button id="chooseFolderButton" class="primary">选择 Rime 配置文件夹</button>
+          <span id="folderName" class="folder-name">尚未选择</span>
+        </div>
+      </header>
+
+      <section id="blockedPanel" class="blocked hidden">
+        <h2>当前浏览器不能直接编辑本地 Rime 配置</h2>
+        <p id="blockedReason"></p>
+        <p>请使用 Chrome、Edge 或 Opera 等支持本地文件夹读写的浏览器打开本页面。</p>
+      </section>
+
+      <main id="workspace" class="workspace hidden">
+        <aside class="sidebar">
+          <section class="panel">
+            <h2>平台</h2>
+            <div class="segmented">
+              <button id="squirrelTab" data-platform="squirrel">鼠须管</button>
+              <button id="weaselTab" data-platform="weasel">小狼毫</button>
+            </div>
+            <p id="platformHint" class="hint"></p>
+          </section>
+
+          <section class="panel skin-panel">
+            <div class="panel-title-row">
+              <h2>皮肤</h2>
+              <div class="inline-actions">
+                <button id="newSkinButton" class="small">新建</button>
+                <button id="duplicateSkinButton" class="small">复制</button>
+                <button id="deleteSkinButton" class="small">删除</button>
+              </div>
+            </div>
+            <div id="skinList" class="skin-list"></div>
+          </section>
+        </aside>
+
+        <section class="editor">
+          <section class="preview-panel">
+            <div class="panel-title-row">
+              <h2>预览</h2>
+              <span id="previewPlatform" class="badge">未选择</span>
+            </div>
+            <div id="candidatePreview" class="candidate-preview">
+              <div class="preedit">tigress</div>
+              <div class="candidate-row">
+                <span class="candidate active">1. 你好</span>
+                <span class="candidate">2. 你</span>
+                <span class="candidate">3. 年</span>
+                <span class="comment">注释</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel controls">
+            <h2>颜色</h2>
+            <div id="colorControls" class="control-grid"></div>
+          </section>
+
+          <section class="panel controls">
+            <h2>布局</h2>
+            <div class="control-grid">
+              <label>
+                <span>排列</span>
+                <select id="layoutMode">
+                  <option value="linear">横排</option>
+                  <option value="stacked">竖排</option>
+                </select>
+              </label>
+              <label>
+                <span>字体</span>
+                <select id="fontFace"></select>
+              </label>
+              <label>
+                <span>字号</span>
+                <input id="fontPoint" type="range" min="10" max="28" step="1">
+                <input id="fontPointNumber" type="number" min="10" max="28" step="1">
+                <output id="fontPointValue"></output>
+              </label>
+              <label>
+                <span>圆角</span>
+                <input id="cornerRadius" type="range" min="0" max="24" step="1">
+                <input id="cornerRadiusNumber" type="number" min="0" max="24" step="1">
+                <output id="cornerRadiusValue"></output>
+              </label>
+              <label>
+                <span>候选间距</span>
+                <input id="candidateSpacing" type="range" min="0" max="28" step="1">
+                <input id="candidateSpacingNumber" type="number" min="0" max="28" step="1">
+                <output id="candidateSpacingValue"></output>
+              </label>
+              <label>
+                <span>阴影</span>
+                <input id="shadowSize" type="range" min="0" max="24" step="1">
+                <input id="shadowSizeNumber" type="number" min="0" max="24" step="1">
+                <output id="shadowSizeValue"></output>
+              </label>
+            </div>
+          </section>
+        </section>
+
+        <aside class="inspector">
+          <section class="panel">
+            <h2>当前皮肤</h2>
+            <label>
+              <span>显示名称</span>
+              <input id="displayName" type="text">
+            </label>
+            <label>
+              <span>作者</span>
+              <input id="author" type="text">
+            </label>
+            <details>
+              <summary>高级</summary>
+              <label>
+                <span>皮肤 ID</span>
+                <input id="skinId" type="text">
+              </label>
+            </details>
+          </section>
+
+          <section class="panel action-panel">
+            <h2>操作</h2>
+            <button id="setActiveButton">设为当前皮肤</button>
+            <button id="saveButton" class="primary">保存并备份</button>
+            <button id="copyButton">复制到另一平台</button>
+            <button id="reloadBackupsButton">刷新备份</button>
+            <p class="hint">保存或回退后，请重新部署 Rime。</p>
+          </section>
+
+          <section class="panel backups">
+            <h2>备份回退</h2>
+            <div id="backupList" class="backup-list"></div>
+          </section>
+
+          <section class="panel log-panel">
+            <h2>状态</h2>
+            <div id="messageLog" class="message-log"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <script src="./src/core.js"></script>
+    <script src="./src/app.js"></script>
+  </body>
+</html>

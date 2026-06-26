@@ -10,6 +10,8 @@ The first version targets ordinary users. It should avoid exposing Rime YAML fie
 
 The editor is a pure web app. Users can open it as a static page or hosted web page without installing Node or a local helper.
 
+All editor source files live under the visible Chinese directory `Rime皮肤编辑器/`. The first version should keep the user-facing entry point obvious, with `Rime皮肤编辑器/index.html` as the file users can open directly.
+
 Local configuration editing is available only in browsers that support directory access through the File System Access API. The app should use feature detection rather than browser-name detection. If the required APIs are unavailable, the app blocks local editing and tells the user to open the editor in a compatible Chromium-based browser such as Chrome, Edge, or Opera.
 
 The editor only manages frontend global skins:
