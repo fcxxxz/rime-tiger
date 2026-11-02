@@ -303,10 +303,83 @@ local function assert_bypasses_smart_selection(input, selected_index, repr, key_
   assert_equal(state.confirmed, false, label .. " does not commit directly")
 end
 
+local function test_single_letter_code_keeps_positional_second_choice()
+  local result, state = process({
+    input = "a",
+    candidates = {
+      candidate("来"),
+      candidate("！"),
+    },
+  }, "semicolon")
+
+  assert_equal(result, kNoop, "single-letter code passes to key_binder for positional second choice")
+  assert_equal(state.selected, nil, "single-letter code does not select directly")
+  assert_equal(state.confirmed, false, "single-letter second-choice symbol stays positional")
+end
+
+local function test_single_letter_code_unique_candidate_still_commits()
+  local result, state = process({
+    input = "b",
+    candidates = {
+      candidate("不"),
+    },
+  }, "semicolon")
+
+  assert_equal(result, kNoop, "unique candidate commits and passes the key through")
+  assert_equal(state.confirmed, true, "single-letter unique candidate is committed")
+end
+
+local function test_single_letter_code_keeps_positional_third_choice()
+  local result, state = process({
+    input = "a",
+    candidates = {
+      candidate("来"),
+      candidate("！"),
+      candidate("的"),
+    },
+  }, "apostrophe")
+
+  assert_equal(result, kNoop, "single-letter code passes apostrophe to key_binder")
+  assert_equal(state.selected, nil, "single-letter third choice stays positional")
+  assert_equal(state.confirmed, false, "single-letter third choice does not commit directly")
+end
+
+local function test_later_page_still_selects_second_text_candidate()
+  local result, state = process({
+    input = "abcd",
+    selected_index = 9,
+    candidates = {
+      candidate("甲"),
+      candidate("😀", "simplified"),
+      candidate("乙"),
+    },
+  }, "semicolon")
+
+  assert_equal(result, kAccepted, "semicolon keeps smart selection after paging")
+  assert_equal(state.selected, 2, "paged menu still selects the second text candidate")
+end
+
+local function test_later_page_still_selects_third_text_candidate()
+  local result, state = process({
+    input = "abcd",
+    selected_index = 18,
+    candidates = {
+      candidate("甲"),
+      candidate("😀", "simplified"),
+      candidate("乙"),
+      candidate("✓", "simplified"),
+      candidate("丙"),
+    },
+  }, "apostrophe")
+
+  assert_equal(result, kAccepted, "apostrophe keeps smart selection after paging")
+  assert_equal(state.selected, 4, "paged menu still selects the third text candidate")
+end
+
 local function test_compatibility_paths_bypass_smart_selection()
   assert_bypasses_smart_selection("\\bq", 0, "semicolon", nil, "backslash symbol menu")
   assert_bypasses_smart_selection(";bq", 0, "semicolon", nil, "semicolon quick-symbol input")
-  assert_bypasses_smart_selection("abcd", 9, "semicolon", nil, "later candidate page")
+  assert_bypasses_smart_selection("a", 0, "semicolon", nil, "single-letter code")
   assert_bypasses_smart_selection("abcd", 0, "semicolon", { shift = true }, "shifted semicolon")
 end
 
@@ -322,6 +395,11 @@ local tests = {
   test_extension_han_counts_as_text_candidate,
   test_insufficient_text_candidates_commits_first_and_passes_key,
   test_disabled_setting_preserves_positional_binding,
+  test_single_letter_code_keeps_positional_second_choice,
+  test_single_letter_code_unique_candidate_still_commits,
+  test_single_letter_code_keeps_positional_third_choice,
+  test_later_page_still_selects_second_text_candidate,
+  test_later_page_still_selects_third_text_candidate,
   test_compatibility_paths_bypass_smart_selection,
 }
 

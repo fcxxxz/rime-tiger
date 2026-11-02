@@ -53,11 +53,17 @@ behavior.
 
 ## Selection Behavior
 
-When enabled and the current selection is still on the first candidate page:
+When enabled (updated 2026-11-02):
 
 - `;` selects the second normal text candidate;
 - `'` selects the third normal text candidate;
 - candidates beginning with emoji or symbols are skipped;
+- single-letter codes (一简) keep positional selection so the curated
+  second-choice symbols in `tiger.user.dict.yaml` stay reachable with `;`
+  and `'`;
+- smart selection applies after navigating beyond the first page, so `;`
+  still means "the second text candidate" instead of the second candidate on
+  the currently visible page;
 - scanning starts with the configured page size, then prepares 32 more
   candidates at a time until the requested text candidate is found;
 - scanning stops after 512 candidates so an abnormal candidate stream cannot
@@ -81,7 +87,7 @@ Smart selection does not intercept:
 
 - explicit backslash symbol menus such as `\\bq`;
 - semicolon-prefixed quick-symbol input;
-- candidate selection after navigating beyond the first page;
+- single-letter codes (一简), which keep positional selection;
 - modified or released key events.
 
 Those paths retain raw page-relative second/third selection through the
@@ -111,8 +117,9 @@ Automated Lua tests cover:
 - keycap digit associations being skipped;
 - ordinary Han, ASCII, and numeric candidates remaining selectable;
 - insufficient text candidates using commit-and-pass-through behavior;
-- backslash symbols, semicolon-prefixed input, later pages, and disabled mode
-  retaining positional selection;
+- backslash symbols, semicolon-prefixed input, single-letter codes, and
+  disabled mode retaining positional selection;
+- paged menus still receiving smart text-candidate selection;
 - the setting defaulting to enabled when absent;
 - schema and documentation examples containing the setting and its explanatory
   comments;

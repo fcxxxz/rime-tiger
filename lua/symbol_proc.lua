@@ -1,6 +1,9 @@
 --- by 晴
 --[[
-候选唯一时标点符号顶字；次选键可跳过 emoji 和符号联想
+候选唯一时标点符号顶字；次选键跳过 emoji 和符号联想
+
+一简（单码）例外：按候选位置选重，让次选的符号候选（如 ！ a）生效。
+翻页后智能次选依然生效：; 仍选第 2 个正文候选，' 仍选第 3 个正文候选。
 
 放在 key_binder 前面：
 
@@ -86,6 +89,11 @@ local function is_explicit_symbol_input(input)
   return first == "\\" or first == ";"
 end
 
+local function is_single_letter_input(input)
+  local text = tostring(input or "")
+  return #text == 1 and text:match("^[a-zA-Z]$") ~= nil
+end
+
 local function is_symbol_key(key_event)
   local keycode = key_event.keycode
   if key_event:repr() == "space" or keycode < 0x21 or keycode > 0x7e then
@@ -127,8 +135,9 @@ local function smart_select(key_event, env, context, seg)
 
   local rank = smart_choice_rank(key_event)
   local page_size = env.engine.schema.page_size
+  -- 一简（单码）按位置选重（次选符号生效）；翻页后依然智能选重
   if not rank or is_explicit_symbol_input(context.input)
-      or (seg.selected_index or 0) >= page_size then
+      or is_single_letter_input(context.input) then
     return nil, false
   end
 

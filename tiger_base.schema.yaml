@@ -174,7 +174,7 @@ reverse_lookup:
 
 
 smart_candidate_selection:
-  enabled: true # 次选键跳过 emoji 和符号联想；false 恢复按候选位置选重
+  enabled: true # 智能次选：; 和 ' 跳过 emoji/符号联想选正文候选；一简（单码）例外，按位置选重让次选符号生效；翻页后依然智能选重。false 恢复全部按候选位置选重
 
 
 key_binder:
