@@ -1,14 +1,6 @@
 const assert = require('assert');
-const fs = require('fs');
-const path = require('path');
-const vm = require('vm');
 
-const corePath = path.resolve(__dirname, '../Rime皮肤编辑器/src/core.js');
-const source = fs.readFileSync(corePath, 'utf8');
-const sandbox = { console };
-sandbox.globalThis = sandbox;
-vm.createContext(sandbox);
-vm.runInContext(source, sandbox, { filename: corePath });
+const core = require('../Rime皮肤编辑器/src/core.js');
 
 function test(name, fn) {
   try {
@@ -19,8 +11,6 @@ function test(name, fn) {
     throw error;
   }
 }
-
-const core = sandbox.RimeSkinCore;
 
 test('squirrel config writer does not emit weasel-only mark_text', () => {
   const updated = core.updateSquirrelConfig('patch:\n', {
